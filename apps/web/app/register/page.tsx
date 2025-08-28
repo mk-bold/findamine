@@ -155,6 +155,7 @@ export default function RegisterPage() {
   };
 
   const isFormDisabled = !isOldEnough || isSubmitting;
+  const canProceed = isOldEnough && !isSubmitting;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -183,6 +184,9 @@ export default function RegisterPage() {
                 <p className="text-sm text-blue-700">
                   Minimum age: {locationData.minAge} years old
                 </p>
+                <p className="text-sm text-blue-600 mt-1">
+                  <strong>Note:</strong> The minimum age to play Findamine is 13 years old in most locations, but may be higher in your area.
+                </p>
               </div>
             </div>
           </div>
@@ -206,6 +210,90 @@ export default function RegisterPage() {
         )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Date of Birth - First and Always Enabled */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-yellow-800 mb-3">Step 1: Verify Your Age</h3>
+            <div>
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
+                Date of Birth *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  required
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="input pl-10 w-full"
+                />
+              </div>
+              {dateOfBirth && (
+                <div className="mt-2">
+                  {isOldEnough ? (
+                    <div className="flex items-center text-green-600">
+                      <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium">✓ Age requirement met! You can now fill out the rest of the form.</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-red-600">
+                      <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium">✗ You must be at least {locationData?.minAge || 13} years old to use Findamine in {locationData?.locationDisplay}.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Age Warning - Only show if they're too young */}
+          {dateOfBirth && !isOldEnough && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 mr-2" />
+                <div>
+                  <p className="text-sm font-medium text-red-800">
+                    Age Requirement Not Met
+                  </p>
+                  <p className="text-sm text-red-700">
+                    You must be at least {locationData?.minAge || 13} years old to use Findamine in {locationData?.locationDisplay}.
+                  </p>
+                  <p className="text-sm text-red-600 mt-1">
+                    Unfortunately, you cannot continue with registration at this time.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Form Instructions */}
+          {!dateOfBirth && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Please enter your date of birth above to verify your age before continuing with registration.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {canProceed && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-center">
+                <p className="text-sm text-green-700 font-medium">
+                  ✓ Age verified! You can now complete your registration below.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             {/* Email */}
             <div>
@@ -309,36 +397,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Date of Birth */}
-            <div>
-              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
-                Date of Birth *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  required
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="input pl-10"
-                  disabled={isFormDisabled}
-                />
-              </div>
-              {dateOfBirth && (
-                <p className="mt-1 text-sm text-gray-500">
-                  {isOldEnough ? (
-                    <span className="text-green-600">✓ Age requirement met</span>
-                  ) : (
-                    <span className="text-red-600">✗ Too young to use this app</span>
-                  )}
-                </p>
-              )}
-            </div>
+
 
             {/* Password */}
             <div>
@@ -498,6 +557,10 @@ export default function RegisterPage() {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   Creating account...
                 </div>
+              ) : !isOldEnough ? (
+                'Complete Age Verification First'
+              ) : !agreedToTerms || !agreedToPrivacy || !agreedToAge ? (
+                'Agree to Terms to Continue'
               ) : (
                 'Create Account'
               )}
