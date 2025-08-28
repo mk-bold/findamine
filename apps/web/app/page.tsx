@@ -48,18 +48,7 @@ export default function HomePage() {
             src="/images/header-banner.png" 
             alt="Findamine Adventure Banner"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to gradient if image fails to load
-              const target = e.currentTarget;
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) {
-                target.style.display = 'none';
-                fallback.style.display = 'block';
-              }
-            }}
           />
-          {/* Fallback gradient background */}
-          <div className="hidden absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800"></div>
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
@@ -78,7 +67,7 @@ export default function HomePage() {
             
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
               The ultimate location hunting adventure game that combines real-world exploration, 
-              social interaction, and exciting rewards
+              team and community building, and exciting rewards
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -272,18 +261,7 @@ export default function HomePage() {
             src="/images/footer-banner.png" 
             alt="Findamine Adventure Footer"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to gradient if image fails to load
-              const target = e.currentTarget;
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) {
-                target.style.display = 'none';
-                fallback.style.display = 'block';
-              }
-            }}
           />
-          {/* Fallback gradient background */}
-          <div className="hidden absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800"></div>
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-black/50"></div>
         </div>
