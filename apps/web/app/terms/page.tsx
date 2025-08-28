@@ -112,7 +112,7 @@ export default function TermsOfUsePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. User Conduct and Responsibilities</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. User Conduct and Content Guidelines</h2>
             <p className="mb-4">
               As a Findamine user, you agree to:
             </p>
@@ -124,10 +124,53 @@ export default function TermsOfUsePage() {
               <li>Report any safety concerns or dangerous locations</li>
               <li>Use common sense and prioritize safety over game progress</li>
             </ul>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
+              <h3 className="text-lg font-semibold text-red-800 mb-3">🚨 Content and Language Standards</h3>
+              <p className="text-red-700 mb-3">
+                <strong>Explicit Content Prohibition:</strong> Users are strictly prohibited from uploading photos or using language that may be considered:
+              </p>
+              <ul className="text-red-700 list-disc pl-6 mb-3">
+                <li>Explicit, inappropriate, or offensive</li>
+                <li>Containing foul language or profanity</li>
+                <li>Sexually suggestive or inappropriate</li>
+                <li>Violent, graphic, or disturbing</li>
+                <li>Discriminatory or hateful</li>
+                <li>In violation of local laws or regulations</li>
+              </ul>
+              <p className="text-red-700 mb-3">
+                <strong>Chat and Communication Standards:</strong> All public message boards, chat rooms, and communications must maintain respectful language and appropriate content.
+              </p>
+              <p className="text-red-700">
+                <strong>Consequences:</strong> Violations may result in content removal, account suspension, removal from games, or permanent account termination.
+              </p>
+            </div>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Game Rules and Fair Play</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Photo Uploads and Copyright</h2>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-4">
+              <h3 className="text-lg font-semibold text-orange-800 mb-3">📸 Photo Ownership and Usage</h3>
+              <p className="text-orange-700 mb-3">
+                <strong>Copyright Transfer:</strong> By uploading photos to Findamine, you automatically transfer all copyrights and ownership rights to Findamine LLC. This includes:
+              </p>
+              <ul className="text-orange-700 list-disc pl-6 mb-3">
+                <li>Exclusive rights to use, modify, and distribute the photos</li>
+                <li>Rights to use photos in marketing, advertising, and promotional materials</li>
+                <li>Rights to sublicense photos to third parties</li>
+                <li>Permanent and irrevocable transfer of all photo rights</li>
+              </ul>
+              <p className="text-orange-700 mb-3">
+                <strong>Photo Guidelines:</strong> Before uploading photos, ensure you have the right to transfer ownership and that the content is appropriate for public viewing.
+              </p>
+              <p className="text-orange-700">
+                <strong>No Compensation:</strong> You will not receive any compensation for the use of your photos by Findamine LLC.
+              </p>
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Game Rules and Fair Play</h2>
             <p className="mb-4">
               Findamine is designed to be a fun, fair, and safe game. Cheating, exploiting technical issues, or engaging in unfair practices may result in:
             </p>
@@ -140,21 +183,21 @@ export default function TermsOfUsePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Changes to Terms</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Changes to Terms</h2>
             <p className="mb-4">
               Findamine LLC reserves the right to modify these terms at any time. Users will be notified of significant changes, and continued use of the service constitutes acceptance of updated terms.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Contact Information</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Contact Information</h2>
             <p className="mb-4">
               If you have questions about these terms, please contact us at:
             </p>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="font-medium">Findamine LLC</p>
-              <p>Email: legal@findamine.com</p>
-              <p>Address: [Your Business Address]</p>
+              <p>Email: legal@findamine.app</p>
+              <p>Address: 153 W. 160 N., Vineyard, UT 84059</p>
             </div>
           </section>
 

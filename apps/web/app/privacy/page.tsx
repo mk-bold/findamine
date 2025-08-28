@@ -114,7 +114,37 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Data Sharing and Third Parties</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Photo Sharing and Data Ownership</h2>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-4">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-3">📸 Photo Uploads and Sharing</h3>
+              <p className="text-yellow-700 mb-3">
+                <strong>Photo Ownership:</strong> When you upload photos to Findamine, they become shared data that is the property of the game and Findamine LLC. This includes:
+              </p>
+              <ul className="text-yellow-700 list-disc pl-6 mb-3">
+                <li>Photos uploaded as part of clue findings</li>
+                <li>Photos shared in game chat or message boards</li>
+                <li>Photos uploaded for game center or clue locations</li>
+                <li>Any other photos uploaded to the platform</li>
+              </ul>
+              <p className="text-yellow-700 mb-3">
+                <strong>Public Sharing:</strong> Uploaded photos may be:
+              </p>
+              <ul className="text-yellow-700 list-disc pl-6 mb-3">
+                <li>Visible to all players in the game</li>
+                <li>Used by game managers to highlight favorite photos</li>
+                <li>Featured in game promotional materials</li>
+                <li>Shared with other players and game participants</li>
+              </ul>
+              <p className="text-yellow-700">
+                <strong>Important:</strong> Before uploading photos, ensure you are comfortable with them being shared publicly and becoming part of the game's shared content.
+              </p>
+            </div>
+
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Data Sharing and Third Parties</h2>
             
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-4">
               <h3 className="text-lg font-semibold text-green-800 mb-3">🛡️ Paid Users - Enhanced Privacy</h3>
@@ -159,7 +189,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Data Security</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Data Security</h2>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-3">🔒 Security Measures</h3>
               <p className="text-blue-700 mb-3">
@@ -177,7 +207,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Your Rights and Choices</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Your Rights and Choices</h2>
             <p className="mb-4">You have the right to:</p>
             <ul className="list-disc pl-6 mb-4">
               <li>Access and review your personal data</li>
@@ -190,36 +220,36 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Data Retention</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Data Retention</h2>
             <p className="mb-4">
               We retain your data for as long as your account is active or as needed to provide services. If you delete your account, we will remove your personal data within 30 days, except where required by law.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. International Data Transfers</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. International Data Transfers</h2>
             <p className="mb-4">
               Your data may be transferred to and processed in countries other than your own. We ensure appropriate safeguards are in place to protect your data in accordance with applicable privacy laws.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Changes to This Policy</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Changes to This Policy</h2>
             <p className="mb-4">
               We may update this privacy policy from time to time. We will notify you of significant changes via email or through the app, and continued use constitutes acceptance of the updated policy.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">11. Contact Us</h2>
             <p className="mb-4">
               If you have questions about this privacy policy or want to exercise your rights, please contact us:
             </p>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="font-medium">Findamine LLC</p>
               <p>Email: privacy@findamine.com</p>
-              <p>Data Protection Officer: dpo@findamine.com</p>
-              <p>Address: [Your Business Address]</p>
+              <p>Data Protection Officer: dpo@findamine.app</p>
+              <p>Address: 153 W. 160 N., Vineyard, UT 84059</p>
             </div>
           </section>
 

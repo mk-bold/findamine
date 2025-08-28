@@ -127,6 +127,10 @@ model User {
   agreedToPrivacy Boolean @default(false)
   termsVersion    String? // Track which version of terms they agreed to
   privacyVersion  String? // Track which version of privacy policy they agreed to
+  
+  // Photo relationships
+  gamePhotos      GamePhoto[] @relation("GamePhotoUploader")
+  cluePhotos      CluePhoto[] @relation("CluePhotoUploader")
 }
 
 model Game {
@@ -172,6 +176,8 @@ model Game {
   surveys              GameSurvey[]
   teams                Team[]
   treatments           GameTreatment[]
+  gamePhotos           GamePhoto[] @relation("GamePhotos")
+  clueGamePhotos       CluePhoto[] @relation("ClueGamePhotos")
 }
 
 model ClueLocation {
@@ -197,6 +203,7 @@ model ClueLocation {
   
   // Relations
   gameClues   GameClue[]
+  cluePhotos  CluePhoto[] @relation("CluePhotos")
 }
 
 model GameClue {
@@ -247,6 +254,56 @@ model PlayerGame {
   updatedAt     DateTime @updatedAt
   
   @@unique([userId, gameId])
+}
+
+model GamePhoto {
+  id          String   @id @default(cuid())
+  
+  // Photo properties
+  filename    String   // Stored filename
+  originalName String  // Original filename from user
+  description String?  // Optional description
+  isGameCenter Boolean @default(false) // Is this the main game center photo?
+  isFavorited Boolean @default(false) // Has the game manager favorited this photo?
+  
+  // Upload information
+  uploadedBy  String   // User ID who uploaded the photo
+  uploader    User     @relation("GamePhotoUploader", fields: [uploadedBy], references: [id])
+  
+  // Game association
+  gameId      String
+  game        Game     @relation("GamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CluePhoto {
+  id          String   @id @default(cuid())
+  
+  // Photo properties
+  filename    String   // Stored filename
+  originalName String  // Original filename from user
+  description String?  // Optional description
+  isCluePhoto Boolean  @default(false) // Is this the main clue photo?
+  isFavorited Boolean  @default(false) // Has the game manager favorited this photo?
+  
+  // Upload information
+  uploadedBy  String   // User ID who uploaded the photo
+  uploader    User     @relation("CluePhotoUploader", fields: [uploadedBy], references: [id])
+  
+  // Clue association
+  clueLocationId String
+  clueLocation   ClueLocation @relation("CluePhotos", fields: [clueLocationId], references: [id], onDelete: Cascade)
+  
+  // Game association (for favorited photos)
+  gameId      String?
+  game        Game?    @relation("ClueGamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ClueFinding {
