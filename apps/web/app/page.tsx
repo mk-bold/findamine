@@ -41,13 +41,27 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Banner */}
-      <div className="relative bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)`,
-            backgroundSize: '60px 60px'
-          }}></div>
+      <div className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="/images/header-banner.jpg" 
+            alt="Findamine Adventure Banner"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to gradient if image fails to load
+              const target = e.currentTarget;
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) {
+                target.style.display = 'none';
+                fallback.style.display = 'block';
+              }
+            }}
+          />
+          {/* Fallback gradient background */}
+          <div className="hidden absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800"></div>
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/40"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -250,31 +264,55 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-20 bg-primary-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            Ready to Start Your Adventure?
-          </h2>
-          <p className="text-xl text-white/90 mb-8">
-            Join thousands of treasure hunters already exploring their cities with Findamine
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/register" 
-              className="inline-flex items-center justify-center px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg text-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
-            >
-              <Award className="mr-2 h-5 w-5" />
-              Get Started Free
-            </Link>
+      {/* Footer Banner */}
+      <div className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="/images/footer-banner.jpg" 
+            alt="Findamine Adventure Footer"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to gradient if image fails to load
+              const target = e.currentTarget;
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) {
+                target.style.display = 'none';
+                fallback.style.display = 'block';
+              }
+            }}
+          />
+          {/* Fallback gradient background */}
+          <div className="hidden absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800"></div>
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/50"></div>
+        </div>
+        
+        <div className="relative py-20">
+          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Ready to Start Your Adventure?
+            </h2>
+            <p className="text-xl text-white/90 mb-8">
+              Join thousands of treasure hunters already exploring their cities with Findamine
+            </p>
             
-            <Link 
-              href="/login" 
-              className="inline-flex items-center justify-center px-8 py-4 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg text-lg transition-colors duration-200 backdrop-blur-sm border border-white/30"
-            >
-              Sign In to Continue
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/register" 
+                className="inline-flex items-center justify-center px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg text-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+              >
+                <Award className="mr-2 h-5 w-5" />
+                Get Started Free
+              </Link>
+              
+              <Link 
+                href="/login" 
+                className="inline-flex items-center justify-center px-8 py-4 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg text-lg transition-colors duration-200 backdrop-blur-sm border border-white/30"
+              >
+                Sign In to Continue
+              </Link>
+            </div>
           </div>
         </div>
       </div>
