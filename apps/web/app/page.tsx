@@ -45,7 +45,7 @@ export default function HomePage() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
-            src="/images/header-banner.jpg" 
+            src="/images/header-banner.png" 
             alt="Findamine Adventure Banner"
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -269,7 +269,7 @@ export default function HomePage() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
-            src="/images/footer-banner.jpg" 
+            src="/images/footer-banner.png" 
             alt="Findamine Adventure Footer"
             className="w-full h-full object-cover"
             onError={(e) => {
