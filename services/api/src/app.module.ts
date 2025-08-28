@@ -8,6 +8,7 @@ import { AdminModule } from './admin/admin.module';
 import { GameMasterModule } from './game-master/game-master.module';
 import { PlayerModule } from './player/player.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { PhotoModule } from './photo/photo.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     GameMasterModule,
     PlayerModule,
     AnalyticsModule,
+    PhotoModule,
   ],
   controllers: [AppController],
   providers: [PrismaService],
