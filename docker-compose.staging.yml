@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Staging Database
+  staging-db:
+    image: postgis/postgis:16-3.4
+    container_name: findamine-staging-db
+    environment:
+      POSTGRES_DB: findamine_staging
+      POSTGRES_USER: findamine_staging
+      POSTGRES_PASSWORD: staging_password_change_this
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - staging-db-data:/var/lib/postgresql/data
+      - ./services/api/prisma/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - findamine-staging
+
+  # Staging API
+  staging-api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: findamine-staging-api
+    environment:
+      NODE_ENV: staging
+      DATABASE_URL: postgresql://findamine_staging:staging_password_change_this@staging-db:5432/findamine_staging
+      JWT_SECRET: staging-jwt-secret-key-change-this
+      PORT: 4000
+      HOST: 0.0.0.0
+      CORS_ORIGIN: http://localhost:3001
+      COOKIE_SECRET: staging-cookie-secret-change-this
+      BCRYPT_ROUNDS: 12
+      LOG_LEVEL: debug
+      ENABLE_SWAGGER: true
+    ports:
+      - "4001:4000"  # Different port to avoid conflicts
+    depends_on:
+      - staging-db
+    networks:
+      - findamine-staging
+    volumes:
+      - ./services/api:/app
+      - /app/node_modules
+
+  # Staging Web App (for local testing)
+  staging-web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: findamine-staging-web
+    environment:
+      NODE_ENV: staging
+      NEXT_PUBLIC_API_URL: http://localhost:4001
+      NEXT_PUBLIC_ENVIRONMENT: staging
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: staging-nextauth-secret-key-change-this
+    ports:
+      - "3001:3000"  # Different port to avoid conflicts
+    depends_on:
+      - staging-api
+    networks:
+      - findamine-staging
+
+networks:
+  findamine-staging:
+    driver: bridge
+
+volumes:
+  staging-db-data:
