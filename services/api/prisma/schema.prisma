@@ -117,6 +117,16 @@ model User {
   // Analytics relationships
   loginAttempts   LoginAttempt[]
   pageViews       PageView[]
+  
+  // Legal and compliance fields
+  dateOfBirth     DateTime?
+  country         String?
+  state           String?
+  isPaidUser      Boolean @default(false)
+  agreedToTerms   Boolean @default(false)
+  agreedToPrivacy Boolean @default(false)
+  termsVersion    String? // Track which version of terms they agreed to
+  privacyVersion  String? // Track which version of privacy policy they agreed to
 }
 
 model Game {

@@ -1,11 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, Lock, Mail, User, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, MapPin, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+
+interface LocationData {
+  country: string;
+  state?: string;
+  minAge: number;
+  locationDisplay: string;
+}
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -14,18 +21,87 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [isOldEnough, setIsOldEnough] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [agreedToAge, setAgreedToAge] = useState(false);
   
   const { login } = useAuth();
   const router = useRouter();
 
+  // Load user's location on component mount
+  useEffect(() => {
+    const loadLocation = async () => {
+      try {
+        setIsLoadingLocation(true);
+        const response = await fetch('/api/geo-location');
+        if (response.ok) {
+          const data = await response.json();
+          setLocationData(data);
+        } else {
+          // Fallback to default location
+          setLocationData({
+            country: 'US',
+            state: 'CA',
+            minAge: 13,
+            locationDisplay: 'California, United States'
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load location:', error);
+        // Fallback to default location
+        setLocationData({
+          country: 'US',
+          state: 'CA',
+          minAge: 13,
+          locationDisplay: 'California, United States'
+        });
+      } finally {
+        setIsLoadingLocation(false);
+      }
+    };
+
+    loadLocation();
+  }, []);
+
+  // Check age when date of birth changes
+  useEffect(() => {
+    if (dateOfBirth && locationData) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      let calculatedAge = age;
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge = age - 1;
+      }
+      
+      setIsOldEnough(calculatedAge >= locationData.minAge);
+    }
+  }, [dateOfBirth, locationData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !firstName || !lastName || !dateOfBirth) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!agreedToTerms || !agreedToPrivacy || !agreedToAge) {
+      toast.error('You must agree to all terms and conditions');
+      return;
+    }
+
+    if (!isOldEnough) {
+      toast.error('You are not old enough to use this app');
       return;
     }
 
@@ -51,8 +127,15 @@ export default function RegisterPage() {
           email,
           gamerTag: gamerTag || undefined,
           password,
-          firstName: firstName || undefined,
-          lastName: lastName || undefined,
+          firstName,
+          lastName,
+          dateOfBirth,
+          country: locationData?.country,
+          state: locationData?.state,
+          agreedToTerms: true,
+          agreedToPrivacy: true,
+          termsVersion: '1.0',
+          privacyVersion: '1.0',
         }),
       });
 
@@ -71,6 +154,8 @@ export default function RegisterPage() {
     }
   };
 
+  const isFormDisabled = !isOldEnough || isSubmitting;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -86,8 +171,43 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {/* Location and Age Requirement Notice */}
+        {locationData && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <MapPin className="h-5 w-5 text-blue-400 mt-0.5 mr-2" />
+              <div>
+                <p className="text-sm font-medium text-blue-800">
+                  Location: {locationData.locationDisplay}
+                </p>
+                <p className="text-sm text-blue-700">
+                  Minimum age: {locationData.minAge} years old
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Age Warning */}
+        {dateOfBirth && !isOldEnough && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 mr-2" />
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Age Requirement Not Met
+                </p>
+                <p className="text-sm text-red-700">
+                  You must be at least {locationData?.minAge} years old to use Findamine in {locationData?.locationDisplay}.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address *
@@ -106,13 +226,15 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="input pl-10"
                   placeholder="Enter your email"
+                  disabled={isFormDisabled}
                 />
               </div>
             </div>
 
+            {/* Gamer Tag */}
             <div>
               <label htmlFor="gamerTag" className="block text-sm font-medium text-gray-700">
-                Gamer Tag
+                Gamer Tag (Username)
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -127,42 +249,47 @@ export default function RegisterPage() {
                   onChange={(e) => setGamerTag(e.target.value)}
                   className="input pl-10"
                   placeholder="Choose a gamer tag (optional)"
+                  disabled={isFormDisabled}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  autoComplete="given-name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="input"
-                  placeholder="First name"
-                />
-              </div>
+            {/* First Name */}
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                First Name *
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="input"
+                placeholder="First name"
+                disabled={isFormDisabled}
+              />
+            </div>
 
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  autoComplete="family-name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="input"
-                  placeholder="Last name"
-                />
-              </div>
+            {/* Last Name */}
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                Last Name *
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="input"
+                placeholder="Last name"
+                disabled={isFormDisabled}
+              />
             </div>
 
             {/* Privacy Note */}
@@ -182,6 +309,38 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Date of Birth */}
+            <div>
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+                Date of Birth *
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  required
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="input pl-10"
+                  disabled={isFormDisabled}
+                />
+              </div>
+              {dateOfBirth && (
+                <p className="mt-1 text-sm text-gray-500">
+                  {isOldEnough ? (
+                    <span className="text-green-600">✓ Age requirement met</span>
+                  ) : (
+                    <span className="text-red-600">✗ Too young to use this app</span>
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password *
@@ -200,11 +359,13 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="input pr-10 pl-10"
                   placeholder="Create a password"
+                  disabled={isFormDisabled}
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isFormDisabled}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
@@ -215,6 +376,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password *
@@ -233,11 +395,13 @@ export default function RegisterPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="input pr-10 pl-10"
                   placeholder="Confirm your password"
+                  disabled={isFormDisabled}
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isFormDisabled}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
@@ -249,11 +413,85 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Legal Agreements */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">Legal Agreements</h3>
+            
+            {/* Age Confirmation */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="ageAgreement"
+                  name="ageAgreement"
+                  type="checkbox"
+                  checked={agreedToAge}
+                  onChange={(e) => setAgreedToAge(e.target.checked)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  disabled={!isOldEnough}
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="ageAgreement" className="font-medium text-gray-700">
+                  I confirm that I am at least {locationData?.minAge || 13} years old
+                </label>
+                <p className="text-gray-500">
+                  You must meet the minimum age requirement for your location to use Findamine.
+                </p>
+              </div>
+            </div>
+
+            {/* Terms of Use */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="termsAgreement"
+                  name="termsAgreement"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  disabled={isFormDisabled}
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="termsAgreement" className="font-medium text-gray-700">
+                  I agree to the <Link href="/terms" className="text-primary-600 hover:text-primary-500 underline" target="_blank">Terms of Use</Link>
+                </label>
+                <p className="text-gray-500">
+                  You must read and agree to our terms of use to continue.
+                </p>
+              </div>
+            </div>
+
+            {/* Privacy Policy */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="privacyAgreement"
+                  name="privacyAgreement"
+                  type="checkbox"
+                  checked={agreedToPrivacy}
+                  onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  disabled={isFormDisabled}
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="privacyAgreement" className="font-medium text-gray-700">
+                  I agree to the <Link href="/privacy" className="text-primary-600 hover:text-primary-500 underline" target="_blank">Privacy Policy</Link>
+                </label>
+                <p className="text-gray-500">
+                  You must read and agree to our privacy policy to continue.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full py-3 text-base font-medium"
+              disabled={isFormDisabled || !agreedToTerms || !agreedToPrivacy || !agreedToAge}
+              className="btn-primary w-full py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center">
@@ -266,7 +504,12 @@ export default function RegisterPage() {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
+            <p className="text-sm text-gray-600">
+              <Link href="/" className="font-medium text-primary-600 hover:text-primary-500">
+                ← Back to Home
+              </Link>
+            </p>
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
               <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">

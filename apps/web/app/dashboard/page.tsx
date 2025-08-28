@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI, gameMasterAPI } from '@/lib/api';
 import { Users, Gamepad2, MapPin, Trophy, TrendingUp, Activity } from 'lucide-react';
@@ -89,13 +90,20 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.firstName || user?.email}!
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Here's what's happening with your Findamine platform today.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {user?.firstName || user?.email}!
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Here's what's happening with your Findamine platform today.
+          </p>
+        </div>
+        <div>
+          <Link href="/" className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors">
+            ← Back to Home
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}

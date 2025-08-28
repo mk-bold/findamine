@@ -36,7 +36,14 @@ export class AuthService {
     password: string, 
     gamerTag?: string, 
     firstName?: string, 
-    lastName?: string
+    lastName?: string,
+    dateOfBirth?: string,
+    country?: string,
+    state?: string,
+    agreedToTerms?: boolean,
+    agreedToPrivacy?: boolean,
+    termsVersion?: string,
+    privacyVersion?: string
   ) {
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
@@ -58,8 +65,16 @@ export class AuthService {
       }
     }
 
+    // Validate required fields
+    if (!firstName || !lastName || !dateOfBirth || !agreedToTerms || !agreedToPrivacy) {
+      throw new ConflictException('Missing required registration information');
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Parse date of birth
+    const parsedDateOfBirth = new Date(dateOfBirth);
 
     // Create user with all the new fields
     const user = await this.prisma.user.create({
@@ -69,6 +84,13 @@ export class AuthService {
         password: hashedPassword,
         firstName,
         lastName,
+        dateOfBirth: parsedDateOfBirth,
+        country,
+        state,
+        agreedToTerms,
+        agreedToPrivacy,
+        termsVersion,
+        privacyVersion,
         role: 'PLAYER', // Default role
       },
     });

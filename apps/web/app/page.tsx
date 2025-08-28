@@ -20,23 +20,24 @@ export default function HomePage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, isLoading, router]);
+  // Temporarily disable authentication check for testing
+  // useEffect(() => {
+  //   if (!isLoading && user) {
+  //     router.push('/dashboard');
+  //   }
+  // }, [user, isLoading, router]);
 
-  // If user is logged in, show loading while redirecting
-  if (isLoading || user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading Findamine...</p>
-        </div>
-      </div>
-    );
-  }
+  // // If user is logged in, show loading while redirecting
+  // if (isLoading || user) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto"></div>
+  //         <p className="mt-4 text-lg text-gray-600">Loading Findamine...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-white">
@@ -67,7 +68,7 @@ export default function HomePage() {
             
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
               The ultimate location hunting adventure game that combines real-world exploration, 
-              team and community building, and exciting rewards
+              team and community building,om t and exciting rewards
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

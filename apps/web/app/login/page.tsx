@@ -128,7 +128,12 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
+            <p className="text-sm text-gray-600">
+              <Link href="/" className="font-medium text-primary-600 hover:text-primary-500">
+                ← Back to Home
+              </Link>
+            </p>
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <Link href="/register" className="font-medium text-primary-600 hover:text-primary-500">

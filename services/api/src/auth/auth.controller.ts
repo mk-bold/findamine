@@ -8,8 +8,15 @@ export class RegisterDto {
   email!: string;
   password!: string;
   gamerTag?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName!: string;
+  lastName!: string;
+  dateOfBirth!: string;
+  country?: string;
+  state?: string;
+  agreedToTerms!: boolean;
+  agreedToPrivacy!: boolean;
+  termsVersion?: string;
+  privacyVersion?: string;
 }
 
 export class LoginDto {
@@ -29,6 +36,13 @@ export class AuthController {
       registerDto.gamerTag,
       registerDto.firstName,
       registerDto.lastName,
+      registerDto.dateOfBirth,
+      registerDto.country,
+      registerDto.state,
+      registerDto.agreedToTerms,
+      registerDto.agreedToPrivacy,
+      registerDto.termsVersion,
+      registerDto.privacyVersion,
     );
   }
 
