@@ -63,7 +63,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-              The ultimate treasure hunting adventure game that combines real-world exploration, 
+              The ultimate location hunting adventure game that combines real-world exploration, 
               social interaction, and exciting rewards
             </p>
             
@@ -149,7 +149,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Why Choose Findamine?
+              Why Play Findamine?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Discover the unique features that make Findamine the ultimate adventure gaming experience
