@@ -29,8 +29,6 @@ export default function RegisterPage() {
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [isOldEnough, setIsOldEnough] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
-  const [agreedToAge, setAgreedToAge] = useState(false);
   
   const { login } = useAuth();
   const router = useRouter();
@@ -95,8 +93,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!agreedToTerms || !agreedToPrivacy || !agreedToAge) {
-      toast.error('You must agree to all terms and conditions');
+    if (!agreedToTerms) {
+      toast.error('You must agree to the terms of use');
       return;
     }
 
@@ -133,9 +131,7 @@ export default function RegisterPage() {
           country: locationData?.country,
           state: locationData?.state,
           agreedToTerms: true,
-          agreedToPrivacy: true,
           termsVersion: '1.0',
-          privacyVersion: '1.0',
         }),
       });
 
@@ -253,25 +249,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Age Warning - Only show if they're too young */}
-          {dateOfBirth && !isOldEnough && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 mr-2" />
-                <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Age Requirement Not Met
-                  </p>
-                  <p className="text-sm text-red-700">
-                    You must be at least {locationData?.minAge || 13} years old to use Findamine in {locationData?.locationDisplay}.
-                  </p>
-                  <p className="text-sm text-red-600 mt-1">
-                    Unfortunately, you cannot continue with registration at this time.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Form Instructions */}
           {!dateOfBirth && (
@@ -476,28 +454,7 @@ export default function RegisterPage() {
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Legal Agreements</h3>
             
-            {/* Age Confirmation */}
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  id="ageAgreement"
-                  name="ageAgreement"
-                  type="checkbox"
-                  checked={agreedToAge}
-                  onChange={(e) => setAgreedToAge(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  disabled={!isOldEnough}
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="ageAgreement" className="font-medium text-gray-700">
-                  I confirm that I am at least {locationData?.minAge || 13} years old
-                </label>
-                <p className="text-gray-500">
-                  You must meet the minimum age requirement for your location to use Findamine.
-                </p>
-              </div>
-            </div>
+
 
             {/* Terms of Use */}
             <div className="flex items-start">
@@ -522,34 +479,20 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Privacy Policy */}
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  id="privacyAgreement"
-                  name="privacyAgreement"
-                  type="checkbox"
-                  checked={agreedToPrivacy}
-                  onChange={(e) => setAgreedToPrivacy(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  disabled={isFormDisabled}
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="privacyAgreement" className="font-medium text-gray-700">
-                  I agree to the <Link href="/privacy" className="text-primary-600 hover:text-primary-500 underline" target="_blank">Privacy Policy</Link>
-                </label>
-                <p className="text-gray-500">
-                  You must read and agree to our privacy policy to continue.
-                </p>
-              </div>
+            {/* Privacy Policy Link */}
+            <div className="text-sm text-gray-600">
+              <p>
+                By continuing, you acknowledge that you have read our{' '}
+                <Link href="/privacy" className="text-primary-600 hover:text-primary-500 underline" target="_blank">Privacy Policy</Link>
+                {' '}and understand how your data will be used.
+              </p>
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              disabled={isFormDisabled || !agreedToTerms || !agreedToPrivacy || !agreedToAge}
+              disabled={isFormDisabled || !agreedToTerms}
               className="btn-primary w-full py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -559,7 +502,7 @@ export default function RegisterPage() {
                 </div>
               ) : !isOldEnough ? (
                 'Complete Age Verification First'
-              ) : !agreedToTerms || !agreedToPrivacy || !agreedToAge ? (
+              ) : !agreedToTerms ? (
                 'Agree to Terms to Continue'
               ) : (
                 'Create Account'
