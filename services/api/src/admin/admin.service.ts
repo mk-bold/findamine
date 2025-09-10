@@ -105,7 +105,7 @@ export class AdminService {
   }
 
   async promoteUser(id: string, newRole: UserRole) {
-    // Only allow promoting to GAME_MASTER or ADMIN
+    // Only allow promoting to GAME_MANAGER or ADMIN
     if (newRole === 'PLAYER') {
       throw new ForbiddenException('Cannot demote user to PLAYER role');
     }
@@ -135,23 +135,25 @@ export class AdminService {
   }
 
   async getSystemStats() {
-    const [totalUsers, activeUsers, admins, gameMasters, players] = await Promise.all([
+    const [totalUsers, totalPlayers, activeUsers, totalGames, activeGames, totalClues, totalFindings] = await Promise.all([
       this.prisma.user.count(),
-      this.prisma.user.count({ where: { isActive: true } }),
-      this.prisma.user.count({ where: { role: 'ADMIN' } }),
-      this.prisma.user.count({ where: { role: 'GAME_MASTER' } }),
       this.prisma.user.count({ where: { role: 'PLAYER' } }),
+      this.prisma.user.count({ where: { isActive: true } }),
+      this.prisma.game.count(),
+      this.prisma.game.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.gameClue.count(),
+      this.prisma.clueFinding.count()
     ]);
 
     return {
       totalUsers,
+      totalPlayers,
       activeUsers,
-      inactiveUsers: totalUsers - activeUsers,
-      roleDistribution: {
-        admins,
-        gameMasters,
-        players,
-      },
+      totalGames,
+      activeGames,
+      totalClues,
+      totalFindings,
+      recentActivity: [] // Could be populated with recent user registrations, game creations, etc.
     };
   }
 } 

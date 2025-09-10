@@ -27,9 +27,16 @@ export default function LoginPage() {
     setIsSubmitting(true);
     
     try {
+      console.log('LOGIN: Starting login process...');
       const success = await login(email, password);
+      console.log('LOGIN: Login result:', success);
+      
       if (success) {
+        console.log('LOGIN: Success! Attempting to navigate to dashboard...');
         router.push('/dashboard');
+        console.log('LOGIN: Router.push called');
+      } else {
+        console.log('LOGIN: Login failed, not redirecting');
       }
     } catch (error) {
       console.error('Login error:', error);

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create a response that clears the auth_token cookie
-    const response = NextResponse.json({ message: 'Logged out successfully' });
+    const response = NextResponse.json({ success: true });
     
     // Clear the auth_token cookie by setting it to expire in the past
     response.cookies.set('auth_token', '', {

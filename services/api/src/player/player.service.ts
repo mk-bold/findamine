@@ -95,11 +95,20 @@ export class PlayerService {
       .filter(p => p.isActive)
       .map(p => p.gameId);
 
-    return activeGames.map(game => ({
-      ...game,
-      isParticipating: participatingGameIds.includes(game.id),
-      canJoin: !participatingGameIds.includes(game.id)
-    }));
+    // Calculate player count for each game
+    const gamesWithPlayerCounts = activeGames.map(game => {
+      const currentPlayers = game._count.playerGames || 0;
+      
+      return {
+        ...game,
+        remainingSpots: null, // No maxPlayers constraint in current schema
+        currentPlayers,
+        isJoined: participatingGameIds.includes(game.id),
+        canJoin: !participatingGameIds.includes(game.id) // Any player can join since no max limit
+      };
+    });
+
+    return gamesWithPlayerCounts;
   }
 
   async joinGame(userId: string, gameId: string) {
@@ -718,5 +727,188 @@ export class PlayerService {
     }
 
     return points;
+  }
+
+  // ===== SOCIAL CONNECTION METHODS =====
+  
+  async getMinions(userId: string) {
+    return this.prisma.socialConnection.findMany({
+      where: { followingId: userId, isActive: true },
+      include: {
+        follower: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profilePicture: true,
+            statusMessage: true,
+            homeCity: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async getFrenemies(userId: string) {
+    return this.prisma.socialConnection.findMany({
+      where: { followerId: userId, isActive: true },
+      include: {
+        following: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profilePicture: true,
+            statusMessage: true,
+            homeCity: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async searchPlayers(
+    userId: string,
+    userRole: string,
+    search?: string,
+    gameId?: string,
+    limit: number = 50,
+    offset: number = 0
+  ) {
+    let where: any = {
+      isActive: true,
+      id: { not: userId } // Exclude current user
+    };
+
+    // Add search filter if provided
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Filter by game participation if gameId provided
+    if (gameId) {
+      where.playerGames = {
+        some: {
+          gameId: gameId,
+          isActive: true
+        }
+      };
+    }
+
+    const players = await this.prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: userRole === 'ADMIN' || userRole === 'GAME_MANAGER' ? true : false,
+        profilePicture: true,
+        statusMessage: true,
+        homeCity: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            playerGames: true,
+            clueFindings: true,
+            followers: { where: { isActive: true } },
+            following: { where: { isActive: true } }
+          }
+        }
+      },
+      take: limit,
+      skip: offset,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Get current user's social connections to determine follow status
+    const userConnections = await this.prisma.socialConnection.findMany({
+      where: {
+        followerId: userId,
+        isActive: true,
+        followingId: { in: players.map(p => p.id) }
+      },
+      select: { followingId: true }
+    });
+
+    const followingIds = new Set(userConnections.map(c => c.followingId));
+
+    return players.map(player => ({
+      ...player,
+      isFollowing: followingIds.has(player.id),
+      followerCount: player._count.followers,
+      followingCount: player._count.following,
+      gamesCount: player._count.playerGames,
+      cluesFoundCount: player._count.clueFindings
+    }));
+  }
+
+  async getPlayerStats(userId: string) {
+    // Get player's games
+    const playerGames = await this.prisma.playerGame.findMany({
+      where: { userId, isActive: true },
+      include: { game: true }
+    });
+
+    const playerGameIds = playerGames.map(pg => pg.gameId);
+
+    // Count players across all games the user is playing
+    const totalPlayersInMyGames = await this.prisma.playerGame.count({
+      where: {
+        gameId: { in: playerGameIds },
+        isActive: true
+      }
+    });
+
+    // Count active games the player is in
+    const activeGames = playerGames.filter(pg => pg.game.status === 'ACTIVE').length;
+
+    // Get total clues across player's games (both available and forthcoming)
+    const allClues = await this.prisma.gameClue.findMany({
+      where: { gameId: { in: playerGameIds } },
+      include: { game: true }
+    });
+
+    // Available clues (released already)
+    const now = new Date();
+    const availableClues = allClues.filter(clue => {
+      if (!clue.releaseTime) return true; // If no release time, assume available
+      const releaseTime = new Date(clue.releaseTime);
+      return releaseTime <= now;
+    });
+
+    // Forthcoming clues (scheduled for future release)
+    const forthcomingClues = allClues.filter(clue => {
+      if (!clue.releaseTime) return false; // If no release time, not forthcoming
+      const releaseTime = new Date(clue.releaseTime);
+      return releaseTime > now;
+    });
+
+    // Count player's findings
+    const totalFindings = await this.prisma.clueFinding.count({
+      where: { 
+        userId,
+        gameClue: { gameId: { in: playerGameIds } }
+      }
+    });
+
+    return {
+      totalUsers: 0, // Not applicable for players
+      totalPlayers: totalPlayersInMyGames, // Players across games they're playing
+      activeUsers: 0, // Not applicable for players
+      totalGames: playerGames.length,
+      activeGames,
+      totalClues: availableClues.length,
+      availableClues: availableClues.length,
+      forthcomingClues: forthcomingClues.length,
+      totalFindings,
+      recentActivity: [] // Could be populated with recent game activities
+    };
   }
 } 

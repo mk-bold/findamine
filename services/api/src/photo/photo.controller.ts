@@ -37,7 +37,7 @@ export class PhotoController {
 
   @Put('game/:photoId/favorite')
   @UseGuards(RoleGuard)
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async toggleGamePhotoFavorite(
     @Param('photoId', ParseUUIDPipe) photoId: string,
     @Request() req: any
@@ -47,10 +47,19 @@ export class PhotoController {
 
   @Delete('game/:photoId')
   async deleteGamePhoto(
-    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Param('photoId') photoId: string,
     @Request() req: any
   ) {
     return this.photoService.deleteGamePhoto(photoId, req.user.id);
+  }
+
+  @Put('game/:photoId')
+  async updateGamePhoto(
+    @Param('photoId') photoId: string,
+    @Body() updatePhotoDto: UpdatePhotoDto,
+    @Request() req: any
+  ) {
+    return this.photoService.updateGamePhoto(photoId, updatePhotoDto, req.user.id);
   }
 
   // Clue Photo Endpoints
@@ -72,7 +81,7 @@ export class PhotoController {
 
   @Put('clue/:photoId/favorite')
   @UseGuards(RoleGuard)
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async toggleCluePhotoFavorite(
     @Param('photoId', ParseUUIDPipe) photoId: string,
     @Request() req: any

@@ -24,6 +24,11 @@ export default function UsersPage() {
   }, [user]);
 
   useEffect(() => {
+    if (!Array.isArray(users)) {
+      setFilteredUsers([]);
+      return;
+    }
+    
     const filtered = users.filter(user => 
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.firstName && user.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -37,16 +42,17 @@ export default function UsersPage() {
     try {
       setIsLoading(true);
       const response = await adminAPI.getUsers();
-      setUsers(response);
+      setUsers(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Failed to fetch users:', error);
       toast.error('Failed to load users');
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePromoteUser = async (userId: string, newRole: 'GAME_MASTER' | 'ADMIN') => {
+  const handlePromoteUser = async (userId: string, newRole: 'GAME_MANAGER' | 'ADMIN') => {
     try {
       await adminAPI.promoteUser(userId, newRole);
       toast.success(`User promoted to ${newRole}`);
@@ -90,7 +96,7 @@ export default function UsersPage() {
     switch (role) {
       case 'ADMIN':
         return <Shield className="h-4 w-4" />;
-      case 'GAME_MASTER':
+      case 'GAME_MANAGER':
         return <UserCheck className="h-4 w-4" />;
       case 'PLAYER':
         return <UserIcon className="h-4 w-4" />;
@@ -103,7 +109,7 @@ export default function UsersPage() {
     switch (role) {
       case 'ADMIN':
         return 'bg-danger-100 text-danger-800';
-      case 'GAME_MASTER':
+      case 'GAME_MANAGER':
         return 'bg-warning-100 text-warning-800';
       case 'PLAYER':
         return 'bg-success-100 text-success-800';
@@ -249,13 +255,13 @@ export default function UsersPage() {
                               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border">
                                 {user.role === 'PLAYER' && (
                                   <button
-                                    onClick={() => handlePromoteUser(user.id, 'GAME_MASTER')}
+                                    onClick={() => handlePromoteUser(user.id, 'GAME_MANAGER')}
                                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                   >
                                     Promote to Game Master
                                   </button>
                                 )}
-                                {user.role === 'GAME_MASTER' && (
+                                {user.role === 'GAME_MANAGER' && (
                                   <button
                                     onClick={() => handlePromoteUser(user.id, 'ADMIN')}
                                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

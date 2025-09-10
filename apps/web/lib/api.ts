@@ -63,7 +63,7 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  role: 'ADMIN' | 'GAME_MASTER' | 'PLAYER';
+  role: 'ADMIN' | 'GAME_MANAGER' | 'PLAYER';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -208,7 +208,7 @@ export const adminAPI = {
     return response.data;
   },
 
-  promoteUser: async (id: string, role: 'GAME_MASTER' | 'ADMIN') => {
+  promoteUser: async (id: string, role: 'GAME_MANAGER' | 'ADMIN') => {
     const response = await api.put(`/admin/users/${id}/promote`, { role });
     return response.data;
   },
@@ -346,6 +346,11 @@ export const gameMasterAPI = {
 
 // Player API
 export const playerAPI = {
+  getStats: async () => {
+    const response = await api.get('/player/stats');
+    return response.data;
+  },
+
   getAvailableGames: async () => {
     const response = await api.get('/player/games/available');
     return response.data;

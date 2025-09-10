@@ -9,6 +9,8 @@ import { GameMasterModule } from './game-master/game-master.module';
 import { PlayerModule } from './player/player.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { PhotoModule } from './photo/photo.module';
+import { AiModule } from './ai/ai.module';
+import { ClueFindingsModule } from './clue-findings/clue-findings.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { PhotoModule } from './photo/photo.module';
     PlayerModule,
     AnalyticsModule,
     PhotoModule,
+    AiModule,
+    ClueFindingsModule,
   ],
   controllers: [AppController],
   providers: [PrismaService],

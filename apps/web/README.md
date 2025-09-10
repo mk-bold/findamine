@@ -90,7 +90,7 @@ The app comes with pre-configured demo accounts:
 ### **Role Hierarchy**
 
 - **ADMIN**: Full access to all features
-- **GAME_MASTER**: Access to game management and player features
+- **GAME_MANAGER**: Access to game management and player features
 - **PLAYER**: Access to game participation and profile features
 
 ## 🏗️ Project Structure

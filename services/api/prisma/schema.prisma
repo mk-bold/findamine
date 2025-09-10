@@ -7,6 +7,459 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                String                @id @default(cuid())
+  email             String                @unique
+  createdAt         DateTime              @default(now())
+  firstName         String?
+  isActive          Boolean               @default(true)
+  lastName          String?
+  password          String
+  role              UserRole              @default(PLAYER)
+  updatedAt         DateTime              @updatedAt
+  bestFindMemory    String?
+  degrees           String[]
+  education         String[]
+  favoritePlayZones String[]
+  hobbies           String[]
+  homeCity          String?
+  profilePicture    String?
+  statusMessage     String?
+  workHistory       String[]
+  gamerTag          String?               @unique
+  agreedToPrivacy   Boolean               @default(false)
+  agreedToTerms     Boolean               @default(false)
+  country           String?
+  dateOfBirth       DateTime?
+  isPaidUser        Boolean               @default(false)
+  privacyVersion    String?
+  state             String?
+  termsVersion      String?
+  badges            Badge[]
+  chatPosts         ChatPost[]
+  clueFindings      ClueFinding[]
+  cluePhotos        CluePhoto[]           @relation("CluePhotoUploader")
+  createdGames      Game[]                @relation("GameCreator")
+  gamePhotos        GamePhoto[]           @relation("GamePhotoUploader")
+  loginAttempts     LoginAttempt[]
+  pageViews         PageView[]
+  playerGames       PlayerGame[]
+  profileData       ProfileData[]
+  referredBy        Referral[]            @relation("Referred")
+  referrals         Referral[]            @relation("Referrer")
+  followers         SocialConnection[]    @relation("Follower")
+  following         SocialConnection[]    @relation("Following")
+  surveyResponses   SurveyResponse[]
+  teamMemberships   TeamMember[]
+  treatments        TreatmentAssignment[]
+}
+
+model Game {
+  id                      String              @id @default(cuid())
+  name                    String
+  description             String?
+  status                  GameStatus          @default(DRAFT)
+  startDate               DateTime
+  endDate                 DateTime?
+  isOngoing               Boolean             @default(false)
+  clueReleaseSchedule     ClueReleaseSchedule @default(ALL_AT_ONCE)
+  customReleaseTimes      Json?
+  baseCluePoints          Int                 @default(100)
+  timeDiscountType        TimeDiscountType    @default(NONE)
+  timeDiscountRate        Float               @default(0.0)
+  profileCompletionPoints Int                 @default(50)
+  referralPoints          Int                 @default(25)
+  followerPoints          Int                 @default(10)
+  privacyBonusPoints      Json?
+  createdBy               String
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  pointTrackingMode       PointTrackingMode   @default(HISTORICAL)
+  gameCenterLat           Float?
+  gameCenterLng           Float?
+  gameCenterAddress       String?
+  maxPlayers              Int                 @default(10000000)
+  chatPosts               ChatPost[]
+  clueGamePhotos          CluePhoto[]         @relation("ClueGamePhotos")
+  creator                 User                @relation("GameCreator", fields: [createdBy], references: [id])
+  gameClues               GameClue[]
+  gamePhotos              GamePhoto[]         @relation("GamePhotos")
+  surveys                 GameSurvey[]
+  treatments              GameTreatment[]
+  playerGames             PlayerGame[]
+  prizes                  Prize[]
+  teams                   Team[]
+}
+
+model ClueLocation {
+  id                    String      @id @default(cuid())
+  identifyingName       String
+  anonymizedName        String
+  latitude              Float
+  longitude             Float
+  text                  String
+  hint                  String?
+  gpsVerificationRadius Float       @default(1.5)
+  requiresSelfie        Boolean     @default(true)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  cluePhotos            CluePhoto[] @relation("CluePhotos")
+  gameClues             GameClue[]
+}
+
+model GameClue {
+  id             String        @id @default(cuid())
+  gameId         String
+  clueLocationId String
+  customName     String?
+  customText     String?
+  customHint     String?
+  points         Int           @default(100)
+  releaseTime    DateTime?
+  isReleased     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  findings       ClueFinding[]
+  clueLocation   ClueLocation  @relation(fields: [clueLocationId], references: [id], onDelete: Cascade)
+  game           Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, clueLocationId])
+}
+
+model PlayerGame {
+  id           String       @id @default(cuid())
+  userId       String
+  gameId       String
+  isActive     Boolean      @default(true)
+  joinedAt     DateTime     @default(now())
+  leftAt       DateTime?
+  totalPoints  Int          @default(0)
+  privacyLevel PrivacyLevel @default(PRIVATE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  game         Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+model GamePhoto {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  description  String?
+  isGameCenter Boolean  @default(false)
+  isFavorited  Boolean  @default(false)
+  uploadedBy   String
+  gameId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  game         Game     @relation("GamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
+  uploader     User     @relation("GamePhotoUploader", fields: [uploadedBy], references: [id])
+}
+
+model CluePhoto {
+  id             String       @id @default(cuid())
+  filename       String
+  originalName   String
+  description    String?
+  isCluePhoto    Boolean      @default(false)
+  isFavorited    Boolean      @default(false)
+  uploadedBy     String
+  clueLocationId String
+  gameId         String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  clueLocation   ClueLocation @relation("CluePhotos", fields: [clueLocationId], references: [id], onDelete: Cascade)
+  game           Game?        @relation("ClueGamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
+  uploader       User         @relation("CluePhotoUploader", fields: [uploadedBy], references: [id])
+}
+
+model ClueFinding {
+  id           String   @id @default(cuid())
+  userId       String
+  foundAt      DateTime @default(now())
+  points       Int
+  createdAt    DateTime @default(now())
+  gameClueId   String
+  gpsLatitude  Float
+  gpsLongitude Float
+  selfiePhoto  String?
+  shareFind    Boolean  @default(false)
+  sharePhoto   Boolean  @default(false)
+  gameClue     GameClue @relation(fields: [gameClueId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameClueId])
+}
+
+model Prize {
+  id           String            @id @default(cuid())
+  gameId       String
+  name         String
+  description  String?
+  type         PrizeType
+  distribution PrizeDistribution
+  value        String?
+  frequency    String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  delivery     PrizeDelivery     @default(ELECTRONIC)
+  game         Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model Referral {
+  id         String   @id @default(cuid())
+  referrerId String
+  referredId String
+  isActive   Boolean  @default(true)
+  points     Int      @default(25)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  referred   User     @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+  referrer   User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, referredId])
+}
+
+model SocialConnection {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  isActive    Boolean  @default(true)
+  points      Int      @default(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model ChatPost {
+  id        String    @id @default(cuid())
+  gameId    String
+  userId    String
+  content   String
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+  deletedBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  game      Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProfileData {
+  id               String   @id @default(cuid())
+  userId           String
+  phoneNumber      String?
+  homeAddress      String?
+  education        String?
+  highSchool       String?
+  college          String?
+  shoppingPatterns String?
+  points           Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Survey {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  gameSurveys GameSurvey[]
+  questions   SurveyQuestion[]
+}
+
+model SurveyQuestion {
+  id           String           @id @default(cuid())
+  surveyId     String
+  question     String
+  type         QuestionType
+  pointScaleId String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  pointScale   PointScale       @relation(fields: [pointScaleId], references: [id])
+  survey       Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responses    SurveyResponse[]
+}
+
+model PointScale {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  options     Json
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  questions   SurveyQuestion[]
+}
+
+model GameSurvey {
+  id        String           @id @default(cuid())
+  gameId    String
+  surveyId  String
+  isActive  Boolean          @default(true)
+  points    Int              @default(10)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  game      Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  survey    Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responses SurveyResponse[]
+
+  @@unique([gameId, surveyId])
+}
+
+model SurveyResponse {
+  id           String         @id @default(cuid())
+  userId       String
+  answer       String
+  points       Int            @default(0)
+  createdAt    DateTime       @default(now())
+  gameSurveyId String
+  questionId   String
+  gameSurvey   GameSurvey     @relation(fields: [gameSurveyId], references: [id], onDelete: Cascade)
+  question     SurveyQuestion @relation(fields: [questionId], references: [id])
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean      @default(true)
+  isCrossGame Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  gameId      String?
+  game        Game?        @relation(fields: [gameId], references: [id])
+  members     TeamMember[]
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Treatment {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  gameTreatments GameTreatment[]
+}
+
+model GameTreatment {
+  id             String                  @id @default(cuid())
+  gameId         String
+  treatmentId    String
+  assignmentType TreatmentAssignmentType @default(RANDOM)
+  isActive       Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  game           Game                    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  treatment      Treatment               @relation(fields: [treatmentId], references: [id])
+  assignments    TreatmentAssignment[]
+
+  @@unique([gameId, treatmentId])
+}
+
+model TreatmentAssignment {
+  id              String        @id @default(cuid())
+  userId          String
+  gameTreatmentId String
+  assignedAt      DateTime      @default(now())
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  gameTreatment   GameTreatment @relation(fields: [gameTreatmentId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameTreatmentId])
+}
+
+model LoginAttempt {
+  id             String   @id @default(cuid())
+  userId         String?
+  email          String
+  password       String
+  success        Boolean
+  ipAddress      String?
+  userAgent      String?
+  browser        String?
+  browserVersion String?
+  os             String?
+  osVersion      String?
+  deviceType     String?
+  deviceModel    String?
+  country        String?
+  region         String?
+  city           String?
+  attemptedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User?    @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([attemptedAt])
+  @@index([success])
+}
+
+model PageView {
+  id             String   @id @default(cuid())
+  userId         String?
+  pageName       String
+  pageUrl        String
+  pageTitle      String?
+  referrer       String?
+  ipAddress      String?
+  userAgent      String?
+  browser        String?
+  browserVersion String?
+  os             String?
+  osVersion      String?
+  deviceType     String?
+  deviceModel    String?
+  country        String?
+  region         String?
+  city           String?
+  sessionId      String?
+  viewedAt       DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User?    @relation(fields: [userId], references: [id])
+
+  @@index([pageName])
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([viewedAt])
+  @@index([sessionId])
+}
+
 enum UserRole {
   ADMIN
   GAME_MASTER
@@ -72,631 +525,4 @@ enum TreatmentAssignmentType {
   RANDOM
   MANUAL
   AUTO_FUTURE
-}
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  gamerTag  String?  @unique // New field for username
-  password  String   // This will store hashed passwords
-  role      UserRole @default(PLAYER)
-  firstName String?
-  lastName  String?
-  isActive  Boolean  @default(true)
-  
-  // Profile enhancements
-  profilePicture    String?
-  statusMessage     String?
-  homeCity          String?
-  favoritePlayZones String[] // Array of cities/areas
-  hobbies           String[]
-  bestFindMemory    String? // Photo or description
-  education         String[] // Schools attended
-  degrees           String[] // Degrees earned/working on
-  workHistory       String[] // Companies worked for
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Game relationships
-  createdGames    Game[]           @relation("GameCreator")
-  playerGames     PlayerGame[]
-  referrals       Referral[]       @relation("Referrer")
-  referredBy      Referral[]       @relation("Referred")
-  followers       SocialConnection[] @relation("Follower")
-  following       SocialConnection[] @relation("Following")
-  chatPosts       ChatPost[]
-  profileData     ProfileData[]
-  surveyResponses SurveyResponse[]
-  clueFindings    ClueFinding[]
-  teamMemberships TeamMember[]
-  badges          Badge[]
-  treatments      TreatmentAssignment[]
-  
-  // Analytics relationships
-  loginAttempts   LoginAttempt[]
-  pageViews       PageView[]
-  
-  // Legal and compliance fields
-  dateOfBirth     DateTime?
-  country         String?
-  state           String?
-  isPaidUser      Boolean @default(false)
-  agreedToTerms   Boolean @default(false)
-  agreedToPrivacy Boolean @default(false)
-  termsVersion    String? // Track which version of terms they agreed to
-  privacyVersion  String? // Track which version of privacy policy they agreed to
-  
-  // Photo relationships
-  gamePhotos      GamePhoto[] @relation("GamePhotoUploader")
-  cluePhotos      CluePhoto[] @relation("CluePhotoUploader")
-}
-
-model Game {
-  id                    String            @id @default(cuid())
-  name                  String
-  description           String?
-  status               GameStatus        @default(DRAFT)
-  startDate            DateTime
-  endDate              DateTime?
-  isOngoing            Boolean           @default(false)
-  
-  // Game settings
-  clueReleaseSchedule  ClueReleaseSchedule @default(ALL_AT_ONCE)
-  customReleaseTimes   Json?             // Array of custom release times
-  
-  // Point system
-  baseCluePoints       Int               @default(100)
-  timeDiscountType     TimeDiscountType  @default(NONE)
-  timeDiscountRate     Float             @default(0.0) // Points lost per hour/day
-  
-  // Profile and social points
-  profileCompletionPoints Int            @default(50)
-  referralPoints         Int             @default(25)
-  followerPoints         Int             @default(10)
-  privacyBonusPoints     Json?           // Points for different privacy levels
-  
-  // Point tracking mode
-  pointTrackingMode     PointTrackingMode @default(HISTORICAL)
-  
-  // Game creator
-  createdBy            String
-  creator              User              @relation("GameCreator", fields: [createdBy], references: [id])
-  
-  // Timestamps
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  
-  // Relations
-  gameClues            GameClue[]
-  playerGames          PlayerGame[]
-  chatPosts            ChatPost[]
-  prizes               Prize[]
-  surveys              GameSurvey[]
-  teams                Team[]
-  treatments           GameTreatment[]
-  gamePhotos           GamePhoto[] @relation("GamePhotos")
-  clueGamePhotos       CluePhoto[] @relation("ClueGamePhotos")
-}
-
-model ClueLocation {
-  id          String   @id @default(cuid())
-  
-  // Clue properties
-  identifyingName    String  // e.g., "George Washington Statue"
-  anonymizedName     String  // e.g., "Week 1 Clue 3"
-  latitude           Float
-  longitude          Float
-  
-  // Clue content
-  text               String
-  hint               String?
-  
-  // Verification settings
-  gpsVerificationRadius Float @default(1.5) // 5 feet in meters
-  requiresSelfie        Boolean @default(true)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  gameClues   GameClue[]
-  cluePhotos  CluePhoto[] @relation("CluePhotos")
-}
-
-model GameClue {
-  id              String   @id @default(cuid())
-  gameId          String
-  game            Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  clueLocationId  String
-  clueLocation    ClueLocation @relation(fields: [clueLocationId], references: [id], onDelete: Cascade)
-  
-  // Game-specific customizations
-  customName      String?  // Override the original name
-  customText      String?  // Override the original text
-  customHint      String?  // Override the original hint
-  
-  // Game settings
-  points          Int      @default(100)
-  releaseTime     DateTime?
-  isReleased      Boolean  @default(false)
-  
-  // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  findings       ClueFinding[]
-  
-  @@unique([gameId, clueLocationId])
-}
-
-model PlayerGame {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  
-  // Game participation
-  isActive      Boolean  @default(true)
-  joinedAt      DateTime @default(now())
-  leftAt        DateTime?
-  totalPoints   Int      @default(0)
-  
-  // Privacy settings
-  privacyLevel  PrivacyLevel @default(PRIVATE)
-  
-  // Timestamps
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@unique([userId, gameId])
-}
-
-model GamePhoto {
-  id          String   @id @default(cuid())
-  
-  // Photo properties
-  filename    String   // Stored filename
-  originalName String  // Original filename from user
-  description String?  // Optional description
-  isGameCenter Boolean @default(false) // Is this the main game center photo?
-  isFavorited Boolean @default(false) // Has the game manager favorited this photo?
-  
-  // Upload information
-  uploadedBy  String   // User ID who uploaded the photo
-  uploader    User     @relation("GamePhotoUploader", fields: [uploadedBy], references: [id])
-  
-  // Game association
-  gameId      String
-  game        Game     @relation("GamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model CluePhoto {
-  id          String   @id @default(cuid())
-  
-  // Photo properties
-  filename    String   // Stored filename
-  originalName String  // Original filename from user
-  description String?  // Optional description
-  isCluePhoto Boolean  @default(false) // Is this the main clue photo?
-  isFavorited Boolean  @default(false) // Has the game manager favorited this photo?
-  
-  // Upload information
-  uploadedBy  String   // User ID who uploaded the photo
-  uploader    User     @relation("CluePhotoUploader", fields: [uploadedBy], references: [id])
-  
-  // Clue association
-  clueLocationId String
-  clueLocation   ClueLocation @relation("CluePhotos", fields: [clueLocationId], references: [id], onDelete: Cascade)
-  
-  // Game association (for favorited photos)
-  gameId      String?
-  game        Game?    @relation("ClueGamePhotos", fields: [gameId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ClueFinding {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameClueId String
-  gameClue  GameClue @relation(fields: [gameClueId], references: [id], onDelete: Cascade)
-  
-  // Finding details
-  foundAt       DateTime @default(now())
-  gpsLatitude   Float
-  gpsLongitude  Float
-  selfiePhoto   String?  // URL to uploaded photo
-  points        Int      // Points earned (after time discount)
-  
-  // Privacy settings
-  shareFind     Boolean  @default(false) // Share with public
-  sharePhoto    Boolean  @default(false) // Share photo with minions
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  
-  @@unique([userId, gameClueId])
-}
-
-model Prize {
-  id        String   @id @default(cuid())
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  
-  name      String
-  description String?
-  type      PrizeType
-  distribution PrizeDistribution
-  delivery  PrizeDelivery @default(ELECTRONIC)
-  value     String? // Prize description/value
-  
-  // Schedule for recurring prizes
-  frequency String? // "daily", "weekly", null for one-time
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Referral {
-  id          String   @id @default(cuid())
-  referrerId  String
-  referrer    User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredId  String
-  referred    User     @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
-  
-  // Referral status
-  isActive    Boolean  @default(true)
-  points      Int      @default(25)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@unique([referrerId, referredId])
-}
-
-model SocialConnection {
-  id          String   @id @default(cuid())
-  followerId  String
-  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followingId String
-  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
-  
-  // Connection status
-  isActive    Boolean  @default(true)
-  points      Int      @default(10)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@unique([followerId, followingId])
-}
-
-model ChatPost {
-  id        String   @id @default(cuid())
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  content   String
-  isDeleted Boolean  @default(false)
-  deletedAt DateTime?
-  deletedBy String?  // User ID who deleted it
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ProfileData {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Profile fields
-  phoneNumber    String?
-  homeAddress    String?
-  education      String?
-  highSchool     String?
-  college        String?
-  shoppingPatterns String?
-  
-  // Points earned
-  points         Int      @default(0)
-  
-  // Timestamps
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
-model Survey {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  
-  // Survey settings
-  isActive    Boolean  @default(true)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  questions   SurveyQuestion[]
-  gameSurveys GameSurvey[]
-}
-
-model SurveyQuestion {
-  id        String   @id @default(cuid())
-  surveyId  String
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  
-  question  String
-  type      QuestionType
-  pointScaleId String
-  pointScale PointScale @relation(fields: [pointScaleId], references: [id])
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  responses SurveyResponse[]
-}
-
-model PointScale {
-  id        String   @id @default(cuid())
-  name      String   // e.g., "Satisfaction Scale", "Agreement Scale"
-  description String?
-  
-  // Scale options (JSON array of {label: string, value: number})
-  options   Json
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  questions SurveyQuestion[]
-}
-
-model GameSurvey {
-  id        String   @id @default(cuid())
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  surveyId  String
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  
-  // Game-specific settings
-  isActive  Boolean  @default(true)
-  points    Int      @default(10)
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  responses SurveyResponse[]
-  
-  @@unique([gameId, surveyId])
-}
-
-model SurveyResponse {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameSurveyId String
-  gameSurvey GameSurvey @relation(fields: [gameSurveyId], references: [id], onDelete: Cascade)
-  questionId String
-  question  SurveyQuestion @relation(fields: [questionId], references: [id])
-  
-  answer    String
-  points    Int      @default(0)
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-}
-
-model Team {
-  id        String   @id @default(cuid())
-  name      String
-  description String?
-  
-  // Team settings
-  isActive  Boolean  @default(true)
-  isCrossGame Boolean @default(false) // Can span multiple games
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  gameId    String?
-  game      Game?    @relation(fields: [gameId], references: [id])
-  members   TeamMember[]
-}
-
-model TeamMember {
-  id        String   @id @default(cuid())
-  teamId    String
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Member settings
-  role      String   @default("member") // "leader", "member", etc.
-  joinedAt  DateTime @default(now())
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  
-  @@unique([teamId, userId])
-}
-
-model Badge {
-  id        String   @id @default(cuid())
-  name      String
-  description String?
-  icon      String?  // URL to badge icon
-  
-  // Badge settings
-  isActive  Boolean  @default(true)
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Treatment {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  
-  // Treatment settings
-  isActive    Boolean  @default(true)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  gameTreatments GameTreatment[]
-}
-
-model GameTreatment {
-  id          String   @id @default(cuid())
-  gameId      String
-  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  treatmentId String
-  treatment   Treatment @relation(fields: [treatmentId], references: [id])
-  
-  // Treatment settings
-  assignmentType TreatmentAssignmentType @default(RANDOM)
-  isActive       Boolean  @default(true)
-  
-  // Timestamps
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  // Relations
-  assignments TreatmentAssignment[]
-  
-  @@unique([gameId, treatmentId])
-}
-
-model TreatmentAssignment {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameTreatmentId String
-  gameTreatment GameTreatment @relation(fields: [gameTreatmentId], references: [id], onDelete: Cascade)
-  
-  // Assignment details
-  assignedAt  DateTime @default(now())
-  isActive    Boolean  @default(true)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  
-  @@unique([userId, gameTreatmentId])
-}
-
-// New models for analytics and security
-
-model LoginAttempt {
-  id        String   @id @default(cuid())
-  
-  // User identification (may be null for failed attempts)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  
-  // Login attempt details
-  email     String   // Email attempted (always recorded)
-  password  String   // Hashed password attempted (for security analysis)
-  success   Boolean  // Whether login was successful
-  
-  // User agent and device information
-  ipAddress     String?  // IP address of the user
-  userAgent     String?  // Full user agent string
-  browser       String?  // Extracted browser name
-  browserVersion String? // Browser version
-  os            String?  // Operating system
-  osVersion     String?  // OS version
-  deviceType    String?  // mobile, desktop, tablet
-  deviceModel   String?  // Device model if available
-  
-  // Geolocation (if available)
-  country       String?
-  region        String?
-  city          String?
-  
-  // Timestamps
-  attemptedAt   DateTime @default(now())
-  createdAt     DateTime @default(now())
-  
-  @@index([email])
-  @@index([ipAddress])
-  @@index([attemptedAt])
-  @@index([success])
-}
-
-model PageView {
-  id        String   @id @default(cuid())
-  
-  // User identification (may be null for anonymous views)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  
-  // Page information
-  pageName      String   // Name/route of the page
-  pageUrl       String   // Full URL
-  pageTitle     String?  // Page title if available
-  referrer      String?  // Previous page URL
-  
-  // User agent and device information
-  ipAddress     String?  // IP address of the user
-  userAgent     String?  // Full user agent string
-  browser       String?  // Extracted browser name
-  browserVersion String? // Browser version
-  os            String?  // Operating system
-  osVersion     String?  // OS version
-  deviceType    String?  // mobile, desktop, tablet
-  deviceModel   String?  // Device model if available
-  
-  // Geolocation (if available)
-  country       String?
-  region        String?
-  city          String?
-  
-  // Session information
-  sessionId     String?  // Unique session identifier
-  
-  // Timestamps
-  viewedAt      DateTime @default(now())
-  createdAt     DateTime @default(now())
-  
-  @@index([pageName])
-  @@index([userId])
-  @@index([ipAddress])
-  @@index([viewedAt])
-  @@index([sessionId])
 }

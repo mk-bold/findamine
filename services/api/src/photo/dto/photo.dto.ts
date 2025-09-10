@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsUUID, IsNumber } from 'class-validator';
 
 export class CreateGamePhotoDto {
   @IsUUID()
@@ -58,4 +58,8 @@ export class UpdatePhotoDto {
   @IsOptional()
   @IsBoolean()
   isFavorited?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  order?: number;
 }

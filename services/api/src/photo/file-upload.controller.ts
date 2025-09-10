@@ -126,7 +126,7 @@ export class FileUploadController {
   @Post('bulk-upload')
   @UseInterceptors(FileInterceptor('photos', { limits: { files: 10 } }))
   @UseGuards(RoleGuard)
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async bulkUploadPhotos(
     @UploadedFile() files: Express.Multer.File[],
     @Body() body: {

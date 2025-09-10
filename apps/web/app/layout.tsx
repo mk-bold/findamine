@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext'
 import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import { CookieSettingsModal } from '@/components/CookieSettingsModal'
+import MainNavigation from '@/components/MainNavigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <CookieConsentProvider>
           <AuthProvider>
+            <MainNavigation />
             {children}
             <Toaster
               position="top-right"

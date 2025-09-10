@@ -55,30 +55,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('AUTH: Starting login request...');
       setIsLoading(true);
       const response = await authAPI.login(email, password);
+      console.log('AUTH: Login API response:', response);
       
       // Handle both old token-based and new cookie-based responses
       if (response.access_token) {
         // Legacy token-based response
+        console.log('AUTH: Token-based response detected');
         localStorage.setItem('authToken', response.access_token);
         setUser(response.user);
         setIsLoading(false);
         toast.success('Login successful!');
+        console.log('AUTH: Returning true for token-based login');
         return true;
       } else if (response.user) {
         // New cookie-based response
+        console.log('AUTH: Cookie-based response detected');
         setUser(response.user);
         setIsLoading(false);
         toast.success('Login successful!');
+        console.log('AUTH: Returning true for cookie-based login');
         return true;
       } else {
+        console.log('AUTH: Invalid response - no token or user found');
         setIsLoading(false);
         toast.error('Login failed: Invalid response');
         return false;
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Login failed';
+      console.error('AUTH: Login error:', error);
       setIsLoading(false);
       toast.error(errorMessage);
       return false;
@@ -88,7 +96,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       // Call backend logout endpoint to invalidate the session
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include' // Include cookies in the request
+      });
     } catch (error) {
       // Continue with logout even if backend call fails
       console.log('Backend logout call failed, continuing with local logout');
@@ -98,12 +109,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('authToken');
     
     // Clear the auth_token cookie by setting it to expire in the past
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost; path=/;';
     document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     
     // Clear user state
     setUser(null);
     
+    // Show logout message
     toast.success('Logged out successfully');
   }, []);
 

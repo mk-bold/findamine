@@ -18,6 +18,16 @@ export class PhotoService {
       });
     }
 
+    // Get the next available order number for this game
+    const existingPhotos = await this.prisma.gamePhoto.findMany({
+      where: { gameId },
+      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+      take: 1
+    });
+    
+    // Order field removed from schema
+
     return this.prisma.gamePhoto.create({
       data: {
         filename,
@@ -25,7 +35,8 @@ export class PhotoService {
         description,
         isGameCenter,
         uploadedBy,
-        gameId
+        gameId,
+        // order field removed
       },
       include: {
         uploader: {
@@ -53,11 +64,7 @@ export class PhotoService {
           }
         }
       },
-      orderBy: [
-        { isGameCenter: 'desc' },
-        { isFavorited: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: { createdAt: 'asc' }
     });
   }
 
@@ -99,6 +106,27 @@ export class PhotoService {
 
     return this.prisma.gamePhoto.delete({
       where: { id: photoId }
+    });
+  }
+
+  async updateGamePhoto(photoId: string, updatePhotoDto: UpdatePhotoDto, userId: string) {
+    const photo = await this.prisma.gamePhoto.findUnique({
+      where: { id: photoId },
+      include: { game: true }
+    });
+
+    if (!photo) {
+      throw new NotFoundException('Photo not found');
+    }
+
+    // Only the uploader or game manager can update photos
+    if (photo.uploadedBy !== userId && photo.game.createdBy !== userId) {
+      throw new BadRequestException('You can only update your own photos or photos from games you manage');
+    }
+
+    return this.prisma.gamePhoto.update({
+      where: { id: photoId },
+      data: updatePhotoDto
     });
   }
 

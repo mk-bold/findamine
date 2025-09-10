@@ -33,51 +33,65 @@ export class GameMasterController {
   // ===== GAME MANAGEMENT =====
   
   @Post('games')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.PLAYER, Role.GAME_MANAGER, Role.ADMIN)
   async createGame(@Request() req: AuthenticatedRequest, @Body() gameData: CreateGameDto) {
     return this.gameMasterService.createGame(req.user.id, gameData);
   }
 
   @Get('games')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.PLAYER, Role.GAME_MANAGER, Role.ADMIN)
   async getGames(@Request() req: AuthenticatedRequest, @Query('status') status?: string) {
-    return this.gameMasterService.getGames(req.user.id, status as any);
+    return this.gameMasterService.getGames(req.user.id, req.user.role as any, status as any);
   }
 
   @Get('games/:id')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async getGameById(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.gameMasterService.getGameById(id, req.user.id);
   }
 
   @Put('games/:id')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async updateGame(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() updateData: UpdateGameDto) {
     return this.gameMasterService.updateGame(id, req.user.id, updateData);
   }
 
   @Delete('games/:id')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async deleteGame(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.gameMasterService.deleteGame(id, req.user.id);
   }
 
   @Get('games/:id/stats')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async getGameStats(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.gameMasterService.getGameStats(id, req.user.id);
+  }
+
+  @Post('games/validate-code')
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
+  async validateGameCode(@Request() req: AuthenticatedRequest, @Body() body: { gameCode: string; excludeGameId?: string }) {
+    const { gameCode, excludeGameId } = body;
+    const isAvailable = await this.gameMasterService.validateGameCode(gameCode, excludeGameId);
+    return { isAvailable };
+  }
+
+  @Get('clue-locations/:clueLocationId/game-count')
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
+  async getClueLocationGameCount(@Request() req: AuthenticatedRequest, @Param('clueLocationId') clueLocationId: string) {
+    return this.gameMasterService.getClueLocationGameCount(req.user.id, clueLocationId);
   }
 
   // ===== CLUE LOCATION MANAGEMENT =====
   
   @Post('clue-locations')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async createClueLocation(@Body() locationData: CreateClueLocationDto) {
     return this.gameMasterService.createClueLocation(locationData);
   }
 
   @Get('clue-locations')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async getClueLocations(
     @Query('search') search?: string,
     @Query('lat') lat?: string,
@@ -93,13 +107,13 @@ export class GameMasterController {
   }
 
   @Get('clue-locations/:id')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async getClueLocationById(@Param('id') id: string) {
     return this.gameMasterService.getClueLocationById(id);
   }
 
   @Put('clue-locations/:id')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async updateClueLocation(@Param('id') id: string, @Body() updateData: UpdateClueLocationDto) {
     return this.gameMasterService.updateClueLocation(id, updateData);
   }
@@ -107,7 +121,7 @@ export class GameMasterController {
   // ===== GAME CLUE MANAGEMENT =====
   
   @Post('games/:gameId/clues')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async addClueToGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -117,13 +131,13 @@ export class GameMasterController {
   }
 
   @Get('games/:gameId/clues')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async getGameClues(@Request() req: AuthenticatedRequest, @Param('gameId') gameId: string) {
     return this.gameMasterService.getGameClues(gameId, req.user.id);
   }
 
   @Put('games/:gameId/clues/:clueId')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async updateGameClue(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -134,7 +148,7 @@ export class GameMasterController {
   }
 
   @Delete('games/:gameId/clues/:clueId')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async removeClueFromGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -146,7 +160,7 @@ export class GameMasterController {
   // ===== PRIZE MANAGEMENT =====
   
   @Post('games/:gameId/prizes')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async createPrize(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -156,7 +170,7 @@ export class GameMasterController {
   }
 
   @Get('games/:gameId/prizes')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async getGamePrizes(@Request() req: AuthenticatedRequest, @Param('gameId') gameId: string) {
     return this.gameMasterService.getGamePrizes(gameId, req.user.id);
   }
@@ -164,13 +178,13 @@ export class GameMasterController {
   // ===== SURVEY MANAGEMENT =====
   
   @Post('surveys')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async createSurvey(@Body() surveyData: CreateSurveyDto) {
     return this.gameMasterService.createSurvey(surveyData);
   }
 
   @Post('games/:gameId/surveys')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async assignSurveyToGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -182,7 +196,7 @@ export class GameMasterController {
   // ===== TEAM MANAGEMENT =====
   
   @Post('games/:gameId/teams')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async createTeam(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -194,13 +208,13 @@ export class GameMasterController {
   // ===== TREATMENT MANAGEMENT =====
   
   @Post('treatments')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async createTreatment(@Body() treatmentData: CreateTreatmentDto) {
     return this.gameMasterService.createTreatment(treatmentData);
   }
 
   @Post('games/:gameId/treatments')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async assignTreatmentToGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -212,7 +226,7 @@ export class GameMasterController {
   // ===== PLAYER MANAGEMENT =====
   
   @Post('games/:gameId/players')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async addPlayerToGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -222,7 +236,7 @@ export class GameMasterController {
   }
 
   @Post('games/:gameId/players/batch')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async batchAddPlayersToGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -232,7 +246,7 @@ export class GameMasterController {
   }
 
   @Put('games/:gameId/players/:userId/remove')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async removePlayerFromGame(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -244,7 +258,7 @@ export class GameMasterController {
   // ===== CHAT MODERATION =====
   
   @Delete('games/:gameId/chat/:postId')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_OWNER, Role.GAME_MANAGER, Role.ADMIN)
   async deleteChatPost(
     @Request() req: AuthenticatedRequest,
     @Param('gameId') gameId: string,
@@ -256,13 +270,14 @@ export class GameMasterController {
   // ===== LEGACY ENDPOINTS (for backward compatibility) =====
   
   @Get('stats')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async getGameMasterStats(@Request() req: AuthenticatedRequest) {
-    return this.gameMasterService.getGameStats(req.user.id, req.user.id);
+    console.log('🎮 GameMasterController: getGameMasterStats called for user:', req.user.id, 'role:', req.user.role);
+    return this.gameMasterService.getGameMasterStats(req.user.id);
   }
 
   @Get('features')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async getAccessibleFeatures(@Request() req: AuthenticatedRequest) {
     return {
       gameMasterFeatures: [
@@ -286,19 +301,19 @@ export class GameMasterController {
   }
 
   @Get('demo-hierarchy')
-  @Roles(Role.GAME_MASTER, Role.ADMIN)
+  @Roles(Role.GAME_MANAGER, Role.ADMIN)
   async demonstrateHierarchy(@Request() req: AuthenticatedRequest) {
     return {
       message: 'This endpoint demonstrates hierarchical role access!',
       userRole: req.user.role,
       explanation: {
-        ADMIN: 'Can access ADMIN + GAME_MASTER + PLAYER endpoints',
-        GAME_MASTER: 'Can access GAME_MASTER + PLAYER endpoints',
+        ADMIN: 'Can access ADMIN + GAME_MANAGER + PLAYER endpoints',
+        GAME_MANAGER: 'Can access GAME_MANAGER + PLAYER endpoints',
         PLAYER: 'Can only access PLAYER endpoints'
       },
       currentAccess: req.user.role === 'ADMIN'
         ? 'Full access to everything (inherits all permissions)'
-        : req.user.role === 'GAME_MASTER'
+        : req.user.role === 'GAME_MANAGER'
         ? 'Access to game master and player features'
         : 'Access to player features only'
     };

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { 
   GameStatus, 
@@ -20,6 +20,20 @@ export interface CreateGameDto {
   startDate: Date;
   endDate?: Date;
   isOngoing?: boolean;
+  
+  // Game center location
+  gameCenterLat?: number;
+  gameCenterLng?: number;
+  gameCenterAddress?: string;
+  
+  // Game settings
+  maxPlayers?: number;
+  prizePool?: number;
+  entryFee?: number;
+  rules?: string;
+  isPublic?: boolean;
+  gameCode?: string;
+  
   clueReleaseSchedule?: ClueReleaseSchedule;
   customReleaseTimes?: any;
   baseCluePoints?: number;
@@ -30,6 +44,11 @@ export interface CreateGameDto {
   followerPoints?: number;
   privacyBonusPoints?: any;
   pointTrackingMode?: PointTrackingMode;
+  
+  // Prize settings
+  prizeType?: PrizeType;
+  prizeDistribution?: PrizeDistribution;
+  prizeDelivery?: PrizeDelivery;
 }
 
 export interface UpdateGameDto extends Partial<CreateGameDto> {
@@ -53,7 +72,6 @@ export interface UpdateClueLocationDto extends Partial<CreateClueLocationDto> {}
 // DTOs for game clues
 export interface CreateGameClueDto {
   clueLocationId: string;
-  customName?: string;
   customText?: string;
   customHint?: string;
   points?: number;
@@ -125,9 +143,53 @@ export class GameMasterService {
   // ===== GAME MANAGEMENT =====
   
   async createGame(creatorId: string, gameData: CreateGameDto) {
+    // Convert string dates to Date objects if they exist
+    const processedData: any = { ...gameData };
+    if (processedData.startDate && typeof processedData.startDate === 'string') {
+      processedData.startDate = new Date(processedData.startDate);
+    }
+    
+    // Handle endDate properly - if it's an empty string or ongoing game, remove it
+    if (processedData.endDate !== undefined && typeof processedData.endDate === 'string') {
+      if (processedData.endDate.trim() !== '') {
+        processedData.endDate = new Date(processedData.endDate);
+      } else {
+        delete processedData.endDate;
+      }
+    }
+
+    // Handle boolean conversion for isOngoing if it comes as string
+    if (typeof processedData.isOngoing === 'string') {
+      processedData.isOngoing = processedData.isOngoing === 'true' || processedData.isOngoing === 'on';
+    }
+
+    // Convert string numbers to actual numbers
+    const numericFields = ['maxPlayers', 'prizePool', 'entryFee', 'baseCluePoints', 'timeDiscountRate', 'profileCompletionPoints', 'referralPoints', 'followerPoints'];
+    numericFields.forEach(field => {
+      if (processedData[field] && typeof processedData[field] === 'string') {
+        const numValue = parseFloat(processedData[field]);
+        if (!isNaN(numValue)) {
+          processedData[field] = numValue;
+        }
+      }
+    });
+
+    // Handle empty gameCode
+    if (processedData.gameCode === '') {
+      delete processedData.gameCode;
+    }
+
+    // Handle prizeType array - convert array to single value
+    if (Array.isArray(processedData.prizeType) && processedData.prizeType.length > 0) {
+      processedData.prizeType = processedData.prizeType[0];
+    }
+
+    // Filter out fields that don't belong to the Game model
+    const { photos, photoDescriptions, ...cleanGameData } = processedData;
+
     return this.prisma.game.create({
       data: {
-        ...gameData,
+        ...cleanGameData,
         createdBy: creatorId,
       },
       include: {
@@ -138,14 +200,34 @@ export class GameMasterService {
     });
   }
 
-  async getGames(creatorId: string, status?: GameStatus) {
-    const where: any = { createdBy: creatorId };
-    if (status) where.status = status;
+  async getGames(userId: string, userRole: string, status?: GameStatus) {
+    let where: any = {};
+    
+    // Role-based filtering
+    if (userRole === 'GAME_MANAGER' || userRole === 'ADMIN') {
+      // Game managers and admins can see all games
+      if (status) where.status = status;
+    } else {
+      // Players can only see their own created games
+      where.createdBy = userId;
+      if (status) where.status = status;
+    }
 
-    return this.prisma.game.findMany({
+    const games = await this.prisma.game.findMany({
       where,
       include: {
-        creator: { select: { id: true, email: true, firstName: true, lastName: true } },
+        creator: { 
+          select: { 
+            id: true, 
+            email: true, 
+            firstName: true, 
+            lastName: true, 
+            gamerTag: true 
+          } 
+        },
+        gamePhotos: {
+          orderBy: { createdAt: 'asc' }
+        },
         _count: {
           select: {
             playerGames: true,
@@ -157,6 +239,25 @@ export class GameMasterService {
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    console.log(`Found ${games.length} games for user ${userId} with role ${userRole}`);
+
+    // Add current players count and calculate remaining spots
+    const gamesWithPlayerCounts = games.map(game => {
+      const currentPlayers = game._count.playerGames || 0;
+      const maxPlayers = game.maxPlayers || 0;
+      const remainingSpots = maxPlayers > 0 ? Math.max(0, maxPlayers - currentPlayers) : null;
+      
+      console.log(`Game ${game.id} (${game.name}) - Current: ${currentPlayers}, Max: ${maxPlayers}, Remaining: ${remainingSpots}`);
+      
+      return {
+        ...game,
+        remainingSpots,
+        currentPlayers
+      };
+    });
+    
+    return gamesWithPlayerCounts;
   }
 
   async getGameById(gameId: string, creatorId: string) {
@@ -164,6 +265,9 @@ export class GameMasterService {
       where: { id: gameId, createdBy: creatorId },
       include: {
         creator: { select: { id: true, email: true, firstName: true, lastName: true } },
+        gamePhotos: {
+          orderBy: { createdAt: 'asc' }
+        },
         playerGames: {
           include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } }
         },
@@ -189,6 +293,8 @@ export class GameMasterService {
   }
 
   async updateGame(gameId: string, creatorId: string, updateData: UpdateGameDto) {
+    console.log('Received update data:', JSON.stringify(updateData, null, 2));
+    
     const game = await this.prisma.game.findFirst({
       where: { id: gameId, createdBy: creatorId }
     });
@@ -197,11 +303,72 @@ export class GameMasterService {
       throw new NotFoundException('Game not found');
     }
 
+    // Apply the same data processing as createGame
+    const processedData: any = { ...updateData };
+    if (processedData.startDate && typeof processedData.startDate === 'string') {
+      processedData.startDate = new Date(processedData.startDate);
+    }
+    
+    // Handle endDate properly - if it's an empty string or ongoing game, remove it
+    if (processedData.endDate !== undefined && typeof processedData.endDate === 'string') {
+      if (processedData.endDate.trim() !== '') {
+        processedData.endDate = new Date(processedData.endDate);
+      } else {
+        delete processedData.endDate;
+      }
+    }
+
+    // Handle boolean conversion for isOngoing if it comes as string
+    if (typeof processedData.isOngoing === 'string') {
+      processedData.isOngoing = processedData.isOngoing === 'true' || processedData.isOngoing === 'on';
+    }
+
+    // Convert string numbers to actual numbers
+    const numericFields = ['maxPlayers', 'prizePool', 'entryFee', 'baseCluePoints', 'timeDiscountRate', 'profileCompletionPoints', 'referralPoints', 'followerPoints'];
+    numericFields.forEach(field => {
+      if (processedData[field] && typeof processedData[field] === 'string') {
+        const numValue = parseFloat(processedData[field]);
+        if (!isNaN(numValue)) {
+          processedData[field] = numValue;
+        }
+      }
+    });
+
+    // Handle empty gameCode
+    if (processedData.gameCode === '') {
+      delete processedData.gameCode;
+    }
+
+    // Handle prizeType array - convert array to single value
+    if (Array.isArray(processedData.prizeType) && processedData.prizeType.length > 0) {
+      processedData.prizeType = processedData.prizeType[0];
+    }
+
+    // Filter out fields that don't belong to the Game model schema
+    // These fields are not part of the current Game model - they are either form-specific or belong to other models
+    const {
+      photos,
+      photoDescriptions,
+      existingPhotos,
+      // Keep prize fields as they may be part of the Game model now
+      // prizePool,        // Keep - might be part of Game model
+      // entryFee,         // Keep - might be part of Game model  
+      // rules,            // Keep - might be part of Game model
+      // isPublic,         // Keep - might be part of Game model
+      // gameCode,         // Keep - might be part of Game model
+      // prizeType,        // Keep - might be part of Game model
+      // prizeDistribution, // Keep - might be part of Game model
+      // prizeDelivery,    // Keep - might be part of Game model
+      ...gameData
+    } = processedData;
+
+    console.log('Final gameData being sent to Prisma update:', JSON.stringify(gameData, null, 2));
+    
     return this.prisma.game.update({
       where: { id: gameId },
-      data: updateData,
+      data: gameData,
       include: {
-        creator: { select: { id: true, email: true, firstName: true, lastName: true } }
+        creator: { select: { id: true, email: true, lastName: true } }
       }
     });
   }
@@ -243,10 +410,15 @@ export class GameMasterService {
     }
 
     if (lat && lng && radius) {
-      // Simple distance calculation (can be enhanced with PostGIS)
+      // Convert radius from miles to approximate degrees
+      // 1 degree of latitude ≈ 69 miles
+      // 1 degree of longitude ≈ 69 * cos(latitude) miles
+      const latRange = radius / 69;
+      const lngRange = radius / (69 * Math.cos(lat * Math.PI / 180));
+      
       where.AND = [
-        { latitude: { gte: lat - (radius / 111000), lte: lat + (radius / 111000) } },
-        { longitude: { gte: lng - (radius / (111000 * Math.cos(lat * Math.PI / 180))), lte: lng + (radius / (111000 * Math.cos(lat * Math.PI / 180))) } }
+        { latitude: { gte: lat - latRange, lte: lat + latRange } },
+        { longitude: { gte: lng - lngRange, lte: lng + lngRange } }
       ];
     }
 
@@ -292,6 +464,20 @@ export class GameMasterService {
 
     if (!game) {
       throw new NotFoundException('Game not found');
+    }
+
+    // Check if clue already exists in this game
+    const existingClue = await this.prisma.gameClue.findUnique({
+      where: {
+        gameId_clueLocationId: {
+          gameId,
+          clueLocationId: clueData.clueLocationId
+        }
+      }
+    });
+
+    if (existingClue) {
+      throw new ConflictException('This clue location is already added to this game');
     }
 
     return this.prisma.gameClue.create({
@@ -641,5 +827,89 @@ export class GameMasterService {
         total: totalPoints._sum.totalPoints || 0
       }
     };
+  }
+
+  async getGameMasterStats(userId: string) {
+    console.log('🔍 Getting Game Master stats for userId:', userId);
+    
+    // Get general statistics for the game master
+    const [totalGames, activeGames, totalClueLocations, totalPlayers, totalClues, totalFindings, allPlayers] = await Promise.all([
+      this.prisma.game.count({ where: { createdBy: userId } }),
+      this.prisma.game.count({ where: { createdBy: userId, status: 'ACTIVE' } }),
+      this.prisma.clueLocation.count(),
+      this.prisma.playerGame.count({ 
+        where: { 
+          game: { createdBy: userId },
+          isActive: true 
+        } 
+      }),
+      this.prisma.gameClue.count({ where: { game: { createdBy: userId } } }),
+      this.prisma.clueFinding.count({ 
+        where: { gameClue: { game: { createdBy: userId } } } 
+      }),
+      // For game managers, show all players in the platform
+      this.prisma.user.count({ where: { role: 'PLAYER' } })
+    ]);
+
+    console.log('📊 Game Master stats results:', {
+      totalGames,
+      activeGames, 
+      totalClueLocations,
+      totalPlayers,
+      totalClues,
+      totalFindings,
+      allPlayers
+    });
+
+    const stats = {
+      totalUsers: 0, // Not applicable for game master
+      totalPlayers: allPlayers, // All players on platform
+      activeUsers: 0, // Not applicable for game master
+      totalGames,
+      activeGames,
+      totalClues,
+      totalFindings,
+      recentActivity: [] // Could be populated with recent game activities
+    };
+
+    console.log('📤 Returning Game Master stats:', stats);
+    return stats;
+  }
+
+  async validateGameCode(gameCode: string, excludeGameId?: string): Promise<boolean> {
+    if (!gameCode || !gameCode.trim()) {
+      return true; // Empty codes are valid
+    }
+
+    const where: any = { gameCode: gameCode.trim() };
+    if (excludeGameId) {
+      where.id = { not: excludeGameId };
+    }
+
+    const existingGame = await this.prisma.game.findFirst({
+      where,
+      select: { id: true }
+    });
+
+    return !existingGame; // Available if no existing game found
+  }
+
+  async getClueLocationGameCount(creatorId: string, clueLocationId: string) {
+    // Count active and draft games that use this clue location
+    const gameCount = await this.prisma.game.count({
+      where: {
+        createdBy: creatorId,
+        status: {
+          in: ['DRAFT', 'ACTIVE']
+        },
+        gameClues: {
+          some: {
+            clueLocationId: clueLocationId
+          }
+        }
+      }
+    });
+
+    return { count: gameCount };
   }
 } 
