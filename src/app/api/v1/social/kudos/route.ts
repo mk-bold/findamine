@@ -1,0 +1,59 @@
+import { NextRequest } from "next/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type") || "received";
+
+    const supabase = await createSupabaseServiceClient();
+
+    const column = type === "sent" ? "sender_id" : "receiver_id";
+    const { data } = await supabase
+      .from("kudos")
+      .select("*, sender:users!sender_id(id, display_name, avatar_url), receiver:users!receiver_id(id, display_name, avatar_url)")
+      .eq(column, user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    return Response.json({ kudos: data || [] });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
+    const body = await request.json();
+    if (!body.receiver_id || !body.message) {
+      throw new ApiError(400, "receiver_id and message required");
+    }
+
+    const supabase = await createSupabaseServiceClient();
+
+    const { data, error } = await supabase
+      .from("kudos")
+      .insert({
+        sender_id: user.id,
+        receiver_id: body.receiver_id,
+        message_type: body.message_type || "custom",
+        message: body.message,
+        hunt_id: body.hunt_id || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw new ApiError(500, error.message);
+
+    return Response.json({ kudos: data }, { status: 201 });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
