@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { calculateScore, getGrowthMindsetMessage } from "@/lib/services/scoring";
 
 export async function POST(
   request: NextRequest,
@@ -23,7 +24,7 @@ export async function POST(
     // Get session
     const { data: session } = await supabase
       .from("play_sessions")
-      .select("id")
+      .select("id, started_at")
       .eq("hunt_id", huntId)
       .eq("user_id", user.id)
       .eq("status", "active")
@@ -31,66 +32,168 @@ export async function POST(
 
     if (!session) throw new ApiError(404, "No active play session");
 
+    // Get completion record (may already exist from prime-viewed/arrive steps)
+    const { data: completion } = await supabase
+      .from("find_completions")
+      .select("id, hints_used, metadata, completed_at")
+      .eq("play_session_id", session.id)
+      .eq("find_id", find_id)
+      .maybeSingle();
+
+    if (!completion) throw new ApiError(400, "Must arrive at location first");
+    if (completion.completed_at) throw new ApiError(409, "Already completed this find");
+
+    // Count previous attempts
+    const metadata = (completion.metadata || {}) as Record<string, unknown>;
+    const attemptCount = ((metadata.attempt_count as number) || 0) + 1;
+    const maxAttempts = 5;
+
+    if (attemptCount > maxAttempts) {
+      throw new ApiError(400, "Maximum attempts reached");
+    }
+
     // Get the find's task for scoring
     const { data: find } = await supabase
       .from("finds")
-      .select("tasks(content, challenge_type)")
+      .select("tasks(id, content, challenge_type)")
       .eq("id", find_id)
       .single();
 
-    // Simple scoring: check against task content if available
-    let score = 0;
-    let feedback = "";
-    const task = find?.tasks as unknown as { content: Record<string, unknown>; challenge_type: string } | null;
+    const task = find?.tasks as unknown as {
+      id: string;
+      content: Record<string, unknown>;
+      challenge_type: string;
+    } | null;
+
+    // Determine correctness
+    let isCorrect = false;
+    let partialCredit: number | undefined;
 
     if (task?.content) {
       const correct = task.content.correct_answer;
       if (correct !== undefined) {
-        const isCorrect =
+        isCorrect =
           String(answer).toLowerCase().trim() ===
           String(correct).toLowerCase().trim();
-        score = isCorrect ? 100 : 0;
-        feedback = isCorrect ? "Correct!" : "Not quite. Try again or move on.";
+
+        // Check for partial credit (multiple choice with close answers)
+        if (!isCorrect && task.content.partial_answers) {
+          const partials = task.content.partial_answers as Record<string, number>;
+          const normalizedAnswer = String(answer).toLowerCase().trim();
+          if (normalizedAnswer in partials) {
+            partialCredit = partials[normalizedAnswer];
+          }
+        }
       } else {
-        // For open-ended tasks (photo, creative writing), auto-score
-        score = 50;
-        feedback = "Response recorded.";
+        // Open-ended: auto-score as partial
+        partialCredit = 0.5;
       }
     }
 
-    // Update the completion
-    const { data: completion, error } = await supabase
+    // Calculate score with full engine
+    const timeSpent = Math.round(
+      (Date.now() - new Date(session.started_at).getTime()) / 1000
+    );
+
+    const scoringResult = calculateScore({
+      isCorrect,
+      partialCredit,
+      attemptNumber: attemptCount,
+      hintsUsed: completion.hints_used || 0,
+      timeSpentSeconds: timeSpent,
+      expectedTimeSeconds: (task?.content?.expected_time_seconds as number) || undefined,
+      isFirstAttempt: attemptCount === 1,
+      challengeType: task?.challenge_type || "short_text",
+    });
+
+    // Get user's age band for appropriate feedback
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("effective_band")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const ageBand = profile?.effective_band || "intermediate";
+    const gmMessage = getGrowthMindsetMessage(
+      scoringResult.feedback.type,
+      ageBand,
+      attemptCount
+    );
+
+    // Update completion
+    const isNowComplete = isCorrect || attemptCount >= maxAttempts;
+
+    const { error: updateError } = await supabase
       .from("find_completions")
       .update({
         answer_value: String(answer),
-        score,
-        feedback,
-        completed_at: new Date().toISOString(),
+        score: scoringResult.totalScore,
+        feedback: gmMessage.main,
+        completed_at: isNowComplete ? new Date().toISOString() : null,
+        metadata: {
+          ...metadata,
+          attempt_count: attemptCount,
+          scoring_breakdown: scoringResult.breakdown,
+          last_answer: String(answer),
+          is_correct: isCorrect,
+        },
       })
-      .eq("play_session_id", session.id)
-      .eq("find_id", find_id)
-      .select()
-      .single();
+      .eq("id", completion.id);
 
-    if (error) throw new ApiError(500, error.message);
+    if (updateError) throw new ApiError(500, updateError.message);
 
-    // Update session total score
-    const { data: allCompletions } = await supabase
-      .from("find_completions")
-      .select("score")
-      .eq("play_session_id", session.id);
+    // Store answer feedback
+    await supabase.from("answer_feedback").insert({
+      completion_id: completion.id,
+      feedback_type: scoringResult.feedback.type,
+      main_message: gmMessage.main,
+      explanation: gmMessage.explanation,
+      next_steps: gmMessage.nextSteps,
+      generated_by: "template",
+      tone: "growth_mindset",
+    });
 
-    const totalScore = (allCompletions || []).reduce(
-      (sum: number, c: { score: number }) => sum + (c.score || 0),
-      0
-    );
+    // Award points if completed
+    if (isNowComplete) {
+      await supabase.from("points_ledger").insert({
+        user_id: user.id,
+        amount: scoringResult.totalScore,
+        source_type: "challenge",
+        source_id: find_id,
+        hunt_id: huntId,
+        description: `Scored ${scoringResult.totalScore} on find`,
+      });
 
-    await supabase
-      .from("play_sessions")
-      .update({ total_score: totalScore })
-      .eq("id", session.id);
+      // Update session total
+      const { data: allCompletions } = await supabase
+        .from("find_completions")
+        .select("score")
+        .eq("play_session_id", session.id);
 
-    return Response.json({ completion, score, feedback });
+      const totalScore = (allCompletions || []).reduce(
+        (sum: number, c: { score: number }) => sum + (c.score || 0),
+        0
+      );
+
+      await supabase
+        .from("play_sessions")
+        .update({ total_score: totalScore })
+        .eq("id", session.id);
+    }
+
+    return Response.json({
+      score: scoringResult.totalScore,
+      breakdown: scoringResult.breakdown,
+      feedback: {
+        type: scoringResult.feedback.type,
+        main: gmMessage.main,
+        explanation: gmMessage.explanation,
+        next_steps: gmMessage.nextSteps,
+      },
+      attempt: attemptCount,
+      can_retry: scoringResult.feedback.canRetry,
+      is_complete: isNowComplete,
+    });
   } catch (error) {
     return errorResponse(error);
   }

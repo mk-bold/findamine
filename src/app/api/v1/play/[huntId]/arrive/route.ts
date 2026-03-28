@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { getHotColdZone, haversineDistance } from "@/lib/services/hot-cold";
 
 export async function POST(
   request: NextRequest,
@@ -29,69 +30,109 @@ export async function POST(
 
     if (!session) throw new ApiError(404, "No active play session");
 
-    // Check if already arrived at this find
-    const { data: existing } = await supabase
-      .from("find_completions")
-      .select("id")
-      .eq("play_session_id", session.id)
-      .eq("find_id", find_id)
-      .maybeSingle();
+    // Get find's location
+    const { data: find } = await supabase
+      .from("finds")
+      .select("hot_cold_enabled, locations(latitude, longitude, radius_meters)")
+      .eq("id", find_id)
+      .single();
 
-    if (existing) {
-      return Response.json({ completion: existing, already_arrived: true });
-    }
+    const loc = find?.locations as unknown as {
+      latitude: number;
+      longitude: number;
+      radius_meters: number;
+    } | null;
 
-    // Optionally validate GPS proximity
-    let withinRadius = true;
-    if (latitude && longitude) {
-      const { data: find } = await supabase
-        .from("finds")
-        .select("locations(latitude, longitude, radius_meters)")
-        .eq("id", find_id)
-        .single();
+    // Calculate distance and hot/cold zone
+    let distance: number | null = null;
+    let hotCold = null;
+    let withinRadius = false;
 
-      if (find?.locations) {
-        const loc = find.locations as unknown as { latitude: number; longitude: number; radius_meters: number };
-        const distance = haversineDistance(
-          latitude, longitude, loc.latitude, loc.longitude
-        );
-        withinRadius = distance <= (loc.radius_meters || 50);
+    if (latitude && longitude && loc) {
+      distance = haversineDistance(latitude, longitude, loc.latitude, loc.longitude);
+      withinRadius = distance <= (loc.radius_meters || 50);
+
+      if (find?.hot_cold_enabled !== false) {
+        hotCold = getHotColdZone(distance);
       }
     }
 
-    const { data: completion, error } = await supabase
-      .from("find_completions")
-      .insert({
-        play_session_id: session.id,
-        find_id,
-        arrived_at: new Date().toISOString(),
-        metadata: {
-          user_lat: latitude,
-          user_lng: longitude,
-          within_radius: withinRadius,
-        },
-      })
-      .select()
-      .single();
+    // If within radius, record arrival
+    if (withinRadius || !loc) {
+      // Check if already arrived
+      const { data: existing } = await supabase
+        .from("find_completions")
+        .select("id, arrived_at")
+        .eq("play_session_id", session.id)
+        .eq("find_id", find_id)
+        .maybeSingle();
 
-    if (error) throw new ApiError(500, error.message);
+      if (existing?.arrived_at) {
+        return Response.json({
+          arrived: true,
+          already_arrived: true,
+          completion_id: existing.id,
+          distance,
+          hot_cold: hotCold,
+        });
+      }
 
-    return Response.json({ completion, within_radius: withinRadius }, { status: 201 });
+      // Record or update arrival
+      if (existing) {
+        await supabase
+          .from("find_completions")
+          .update({
+            arrived_at: new Date().toISOString(),
+            metadata: {
+              ...(existing as { metadata?: Record<string, unknown> }).metadata,
+              arrival_lat: latitude,
+              arrival_lng: longitude,
+              arrival_distance: distance,
+            },
+          })
+          .eq("id", existing.id);
+
+        return Response.json({
+          arrived: true,
+          completion_id: existing.id,
+          distance,
+          hot_cold: hotCold,
+        });
+      }
+
+      const { data: completion, error } = await supabase
+        .from("find_completions")
+        .insert({
+          play_session_id: session.id,
+          find_id,
+          arrived_at: new Date().toISOString(),
+          metadata: {
+            arrival_lat: latitude,
+            arrival_lng: longitude,
+            arrival_distance: distance,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (error) throw new ApiError(500, error.message);
+
+      return Response.json({
+        arrived: true,
+        completion_id: completion.id,
+        distance,
+        hot_cold: hotCold,
+      }, { status: 201 });
+    }
+
+    // Not within radius yet — return hot/cold data
+    return Response.json({
+      arrived: false,
+      distance,
+      hot_cold: hotCold,
+      radius_needed: loc?.radius_meters || 50,
+    });
   } catch (error) {
     return errorResponse(error);
   }
-}
-
-function haversineDistance(
-  lat1: number, lon1: number, lat2: number, lon2: number
-): number {
-  const R = 6371000; // meters
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
