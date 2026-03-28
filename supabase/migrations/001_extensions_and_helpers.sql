@@ -2,21 +2,6 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- ── RLS helper functions ───────────────────────────────
--- These allow readable RLS policies across all tables.
-
--- Returns the current user's role from the users table
-CREATE OR REPLACE FUNCTION public.user_role()
-RETURNS TEXT AS $$
-  SELECT role FROM public.users WHERE auth_id = auth.uid()
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Returns the current user's app-level UUID from the users table
-CREATE OR REPLACE FUNCTION public.user_id()
-RETURNS UUID AS $$
-  SELECT id FROM public.users WHERE auth_id = auth.uid()
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
 -- ── Updated-at trigger ─────────────────────────────────
 -- Reusable trigger function for auto-updating updated_at columns
 
@@ -57,6 +42,20 @@ CREATE INDEX idx_users_parent_id ON public.users(parent_id);
 CREATE TRIGGER set_users_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- ── RLS helper functions ───────────────────────────────
+-- These allow readable RLS policies across all tables.
+-- Must be created AFTER the users table.
+
+CREATE OR REPLACE FUNCTION public.user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.users WHERE auth_id = auth.uid()
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.user_id()
+RETURNS UUID AS $$
+  SELECT id FROM public.users WHERE auth_id = auth.uid()
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ── RLS policies for users ─────────────────────────────
 
