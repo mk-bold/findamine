@@ -1,0 +1,121 @@
+import { NextRequest } from "next/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import {
+  getAuthUser,
+  requireRole,
+  errorResponse,
+  ApiError,
+} from "@/lib/utils/api-auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+    const radius = searchParams.get("radius") || "50";
+    const q = searchParams.get("q");
+    const audience = searchParams.get("audience");
+    const template = searchParams.get("template");
+    const mine = searchParams.get("mine");
+
+    const supabase = await createSupabaseServiceClient();
+
+    // If requesting own hunts, require auth
+    if (mine === "true") {
+      const user = await getAuthUser(request);
+      if (!user) throw new ApiError(401, "Not authenticated");
+
+      const { data, error } = await supabase
+        .from("hunts")
+        .select("*")
+        .eq("created_by", user.id)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw new ApiError(500, error.message);
+      return Response.json({ hunts: data });
+    }
+
+    // Public search via PostGIS function
+    if (lat && lng) {
+      const { data, error } = await supabase.rpc("search_hunts", {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        radius_km: parseFloat(radius),
+        search_query: q || null,
+        audience: audience || null,
+        max_results: 50,
+      });
+
+      if (error) throw new ApiError(500, error.message);
+      return Response.json({ hunts: data });
+    }
+
+    // Basic list of public hunts
+    let query = supabase
+      .from("hunts")
+      .select("*")
+      .is("deleted_at", null)
+      .eq("is_public", true)
+      .in("status", ["published", "enrollment_open"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (template === "true") {
+      query = query.eq("is_template", true);
+    }
+    if (q) {
+      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+    }
+    if (audience) {
+      query = query.or(`target_audience.eq.${audience},target_audience.eq.all`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new ApiError(500, error.message);
+
+    return Response.json({ hunts: data });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getAuthUser(request);
+    requireRole(user, "teacher", "game_master", "admin", "researcher");
+
+    const body = await request.json();
+    const supabase = await createSupabaseServiceClient();
+
+    const { data: hunt, error } = await supabase
+      .from("hunts")
+      .insert({
+        title: body.title,
+        description: body.description || null,
+        target_audience: body.target_audience || "all",
+        play_mode: body.play_mode || "solo",
+        center_latitude: body.center_latitude || null,
+        center_longitude: body.center_longitude || null,
+        search_radius_km: body.search_radius_km || null,
+        estimated_duration_min: body.estimated_duration_min || null,
+        grade_range_min: body.grade_range_min || null,
+        grade_range_max: body.grade_range_max || null,
+        subject_domains: body.subject_domains || [],
+        max_teams: body.max_teams || null,
+        min_team_size: body.min_team_size || 1,
+        max_team_size: body.max_team_size || 6,
+        is_template: body.is_template || false,
+        metadata: body.metadata || {},
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (error) throw new ApiError(500, error.message);
+
+    return Response.json({ hunt }, { status: 201 });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
