@@ -38,13 +38,13 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
   }, []);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
-      <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-      <p className="mt-1 text-sm text-gray-500">
+    <main className="mx-auto max-w-4xl px-4 py-4">
+      <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+      <p className="mt-0.5 text-sm text-gray-500">
         Welcome back, {user.display_name || "explorer"}.
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="My Hunts"
           description="Create and manage scavenger hunts"
@@ -88,12 +88,11 @@ function DashboardCard({
   return (
     <Link
       href={href}
-      className="block card-themed shadow-sm hover:shadow-md transition-all"
-      style={{ borderColor: "var(--color-border)" }}
+      className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-sky-200 transition-all"
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-themed">{title}</h3>
-        <span className="text-lg font-bold text-themed-primary">{count}</span>
+        <h3 className="font-semibold text-sm text-gray-900">{title}</h3>
+        <span className="text-lg font-bold text-sky-600">{count}</span>
       </div>
       <p className="mt-0.5 text-xs text-gray-500">{description}</p>
     </Link>
