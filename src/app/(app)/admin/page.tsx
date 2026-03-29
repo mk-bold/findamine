@@ -32,14 +32,14 @@ export default async function AdminPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Dashboard</h1>
+    <main className="mx-auto max-w-4xl px-4 py-6">
+      <h1 className="text-lg font-semibold text-gray-900 mb-4">Admin Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-lg border border-gray-200 bg-white p-5">
             <p className="text-sm text-gray-500">{stat.label}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -58,7 +58,7 @@ function AdminLink({ href, title, desc }: { href: string; title: string; desc: s
   return (
     <a
       href={href}
-      className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-emerald-300 transition-colors"
+      className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-sky-200 transition-colors"
     >
       <h3 className="font-semibold text-gray-900">{title}</h3>
       <p className="text-sm text-gray-500 mt-1">{desc}</p>

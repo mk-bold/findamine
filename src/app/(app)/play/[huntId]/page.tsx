@@ -226,7 +226,7 @@ export default function PlayPage() {
       </div>
       <div className="h-2 rounded-full bg-gray-200 mb-4">
         <div
-          className="h-2 rounded-full bg-emerald-500 transition-all"
+          className="h-2 rounded-full bg-sky-500 transition-all"
           style={{ width: `${(totalCompleted / finds.length) * 100}%` }}
         />
       </div>
@@ -246,7 +246,7 @@ export default function PlayPage() {
                 {JSON.stringify((currentFind.primers as { content: Record<string, unknown> }).content.text || "Review this concept before continuing.")}
               </p>
             </div>
-            <button onClick={handlePrimeViewed} className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+            <button onClick={handlePrimeViewed} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
               I&apos;m Ready!
             </button>
           </div>
@@ -266,7 +266,7 @@ export default function PlayPage() {
                 📍 Heading to: {(currentFind.locations as { name: string }).name}
               </p>
             )}
-            <button onClick={handleClueRead} className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+            <button onClick={handleClueRead} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
               Start Navigating 🧭
             </button>
           </div>
@@ -293,7 +293,7 @@ export default function PlayPage() {
             ) : (
               <div className="mb-6">
                 <div className="animate-pulse flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-2xl">
+                  <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center text-2xl">
                     🧭
                   </div>
                 </div>
@@ -316,8 +316,8 @@ export default function PlayPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-3">🧩 Challenge</h2>
 
             {currentFind?.tasks && (
-              <div className="rounded-lg bg-emerald-50 p-4 mb-4">
-                <h3 className="font-medium text-emerald-800">
+              <div className="rounded-lg bg-sky-50 p-4 mb-4">
+                <h3 className="font-medium text-sky-800">
                   {(currentFind.tasks as { title: string }).title}
                 </h3>
               </div>
@@ -349,13 +349,13 @@ export default function PlayPage() {
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Your answer..."
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                 onKeyDown={(e) => e.key === "Enter" && handleSubmitAnswer()}
               />
               <button
                 onClick={handleSubmitAnswer}
                 disabled={!answer}
-                className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
               >
                 Submit
               </button>
@@ -364,7 +364,7 @@ export default function PlayPage() {
             <button
               onClick={handleRequestHint}
               disabled={hintLevel >= 4}
-              className="text-sm text-emerald-600 hover:underline disabled:text-gray-400"
+              className="text-sm text-sky-600 hover:underline disabled:text-gray-400"
             >
               {hintLevel === 0 ? "Need a hint?" : hintLevel < 4 ? `Get more help (Level ${hintLevel + 1})` : "No more hints available"}
             </button>
@@ -379,7 +379,7 @@ export default function PlayPage() {
               Take a photo of yourself at this location to remember your adventure!
             </p>
 
-            <label className="inline-block rounded-md bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-700 cursor-pointer mb-4">
+            <label className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700 cursor-pointer mb-4">
               Take Photo
               <input
                 type="file"
@@ -416,7 +416,7 @@ export default function PlayPage() {
 
             {score !== null && (
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-emerald-600">{score}</div>
+                <div className="text-4xl font-bold text-sky-600">{score}</div>
                 <p className="text-sm text-gray-500">points earned</p>
               </div>
             )}
@@ -471,14 +471,14 @@ export default function PlayPage() {
           isLastFind ? (
             <button
               onClick={handleFinishHunt}
-              className="rounded-md bg-emerald-700 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+              className="rounded-md bg-sky-700 px-6 py-2 text-sm font-medium text-white hover:bg-sky-800"
             >
               🎉 Finish Hunt
             </button>
           ) : (
             <button
               onClick={handleNextFind}
-              className="rounded-md bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700"
             >
               Next Stop →
             </button>

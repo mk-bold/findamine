@@ -27,9 +27,9 @@ export default function StopFlowStepper({ currentStep }: StopFlowStepperProps) {
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full text-lg transition-all ${
                 isActive
-                  ? "bg-emerald-100 ring-2 ring-emerald-500 scale-110"
+                  ? "bg-sky-100 ring-2 ring-sky-500 scale-110"
                   : isCompleted
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-sky-500 text-white"
                   : "bg-gray-100 text-gray-400"
               }`}
             >
@@ -37,7 +37,7 @@ export default function StopFlowStepper({ currentStep }: StopFlowStepperProps) {
             </div>
             <span
               className={`text-xs mt-1 ${
-                isActive ? "text-emerald-700 font-medium" : "text-gray-400"
+                isActive ? "text-sky-700 font-medium" : "text-gray-400"
               }`}
             >
               {step.label}

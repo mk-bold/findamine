@@ -24,12 +24,12 @@ export default async function MyHuntsPage() {
     .order("updated_at", { ascending: false });
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <main className="mx-auto max-w-4xl px-4 py-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Hunts</h1>
+        <h1 className="text-lg font-semibold text-gray-900">My Hunts</h1>
         <Link
           href="/dashboard/hunts/new"
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
         >
           Create Hunt
         </Link>
@@ -40,7 +40,7 @@ export default async function MyHuntsPage() {
           <p className="text-gray-500 mb-4">You haven&apos;t created any hunts yet.</p>
           <Link
             href="/dashboard/hunts/new"
-            className="text-emerald-600 hover:underline"
+            className="text-sky-600 hover:underline"
           >
             Create your first hunt
           </Link>
@@ -51,7 +51,7 @@ export default async function MyHuntsPage() {
             <Link
               key={hunt.id}
               href={`/dashboard/hunts/${hunt.id}`}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 hover:border-emerald-300 transition-colors"
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 hover:border-sky-200 transition-colors"
             >
               <div>
                 <h3 className="font-medium text-gray-900">{hunt.title}</h3>

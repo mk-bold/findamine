@@ -40,8 +40,8 @@ export default function SettingsPage() {
   if (!user) return <main className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">Loading...</main>;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
+    <main className="mx-auto max-w-2xl px-4 py-6">
+      <h1 className="text-lg font-semibold text-gray-900 mb-4">Settings</h1>
 
       <form onSubmit={handleSave} className="space-y-5">
         <div>
@@ -62,7 +62,7 @@ export default function SettingsPage() {
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           />
         </div>
 
@@ -75,7 +75,7 @@ export default function SettingsPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save"}
         </button>

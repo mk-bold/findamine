@@ -39,8 +39,8 @@ export default function NewHuntPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Hunt</h1>
+    <main className="mx-auto max-w-2xl px-4 py-6">
+      <h1 className="text-lg font-semibold text-gray-900 mb-4">Create New Hunt</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
@@ -55,7 +55,7 @@ export default function NewHuntPage() {
             id="title"
             name="title"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             placeholder="e.g. BYU Campus Discovery Walk"
           />
         </div>
@@ -68,7 +68,7 @@ export default function NewHuntPage() {
             id="description"
             name="description"
             rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             placeholder="Describe what players will experience..."
           />
         </div>
@@ -117,7 +117,7 @@ export default function NewHuntPage() {
             name="duration"
             type="number"
             min={5}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             placeholder="30"
           />
         </div>
@@ -126,7 +126,7 @@ export default function NewHuntPage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
           >
             {loading ? "Creating..." : "Create Hunt"}
           </button>

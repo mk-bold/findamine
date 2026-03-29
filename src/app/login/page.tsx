@@ -34,10 +34,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-emerald-50 to-white px-4">
+    <main className="flex min-h-screen items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-emerald-800">Findamine</h1>
+          <h1 className="text-2xl font-bold text-gray-900">findamine</h1>
           <p className="mt-2 text-gray-600">Sign in to your account</p>
         </div>
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
@@ -72,14 +72,14 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
@@ -87,13 +87,13 @@ export default function LoginPage() {
 
         <div className="text-center text-sm text-gray-600 space-y-1">
           <p>
-            <Link href="/forgot-password" className="text-emerald-600 hover:underline">
+            <Link href="/forgot-password" className="text-sky-600 hover:underline">
               Forgot password?
             </Link>
           </p>
           <p>
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-emerald-600 hover:underline">
+            <Link href="/register" className="text-sky-600 hover:underline">
               Sign up
             </Link>
           </p>

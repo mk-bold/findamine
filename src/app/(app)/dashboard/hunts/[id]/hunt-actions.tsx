@@ -33,7 +33,7 @@ export default function HuntActions({ huntId, status }: { huntId: string; status
         className={`rounded-md px-3 py-1.5 text-sm font-medium ${
           status === "published"
             ? "border border-gray-300 text-gray-700 hover:bg-gray-50"
-            : "bg-emerald-600 text-white hover:bg-emerald-700"
+            : "bg-sky-600 text-white hover:bg-sky-700"
         } disabled:opacity-50`}
       >
         {status === "published" ? "Unpublish" : "Publish"}

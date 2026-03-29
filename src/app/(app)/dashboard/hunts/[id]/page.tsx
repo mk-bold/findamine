@@ -25,14 +25,14 @@ export default async function EditHuntPage({
   );
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link href="/dashboard/hunts" className="text-sm text-emerald-600 hover:underline mb-4 inline-block">
+    <main className="mx-auto max-w-4xl px-4 py-6">
+      <Link href="/dashboard/hunts" className="text-sm text-sky-600 hover:underline mb-4 inline-block">
         &larr; My Hunts
       </Link>
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{hunt.title}</h1>
+          <h1 className="text-lg font-bold text-gray-900">{hunt.title}</h1>
           <div className="flex items-center gap-2 mt-1">
             <span className={`rounded-full px-2 py-0.5 text-xs ${
               hunt.status === "published"
@@ -64,7 +64,7 @@ export default async function EditHuntPage({
           <div className="space-y-3">
             {finds.map((find: { id: string; sort_order: number; clue_text: string | null; locations: { name: string } | null; tasks: { title: string; challenge_type: string } | null }, i: number) => (
               <div key={find.id} className="flex gap-3 rounded-lg border border-gray-200 bg-white p-4">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-700">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-medium text-sky-700">
                   {i + 1}
                 </div>
                 <div className="flex-1">

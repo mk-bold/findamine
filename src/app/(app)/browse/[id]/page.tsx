@@ -24,19 +24,19 @@ export default async function HuntDetailPage({
   );
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/browse" className="text-sm text-emerald-600 hover:underline mb-4 inline-block">
+    <main className="mx-auto max-w-3xl px-4 py-6">
+      <Link href="/browse" className="text-sm text-sky-600 hover:underline mb-4 inline-block">
         &larr; Back to browse
       </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">{hunt.title}</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-2">{hunt.title}</h1>
 
       {hunt.description && (
         <p className="text-gray-600 mb-6">{hunt.description}</p>
       )}
 
       <div className="flex flex-wrap gap-3 mb-8">
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700">
+        <span className="rounded-full bg-sky-50 px-3 py-1 text-sm text-sky-700">
           {hunt.target_audience}
         </span>
         <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
@@ -58,7 +58,7 @@ export default async function HuntDetailPage({
           <ol className="space-y-3">
             {finds.map((find: { id: string; sort_order: number; clue_text: string | null; locations: { name: string } | null; tasks: { title: string; challenge_type: string } | null }, i: number) => (
               <li key={find.id} className="flex gap-3 rounded-lg border border-gray-200 p-4">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-medium text-emerald-700">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-medium text-sky-700">
                   {i + 1}
                 </div>
                 <div>
@@ -82,7 +82,7 @@ export default async function HuntDetailPage({
 
       <Link
         href={`/play/${hunt.id}`}
-        className="inline-block rounded-md bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-700"
+        className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700"
       >
         Start Hunt
       </Link>

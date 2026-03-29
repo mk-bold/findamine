@@ -48,7 +48,7 @@ export default function Navbar({ user }: NavbarProps) {
               href={link.href}
               className={`text-sm ${
                 pathname.startsWith(link.href)
-                  ? "text-emerald-700 font-medium"
+                  ? "text-sky-700 font-medium"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
