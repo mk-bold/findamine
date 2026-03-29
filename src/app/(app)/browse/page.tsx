@@ -76,7 +76,7 @@ export default async function BrowseHuntsPage({
               {hunt.description && (
                 <p className="text-sm text-gray-500 line-clamp-2 mb-3">{hunt.description}</p>
               )}
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
                 <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-700">
                   {hunt.target_audience}
                 </span>

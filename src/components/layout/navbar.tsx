@@ -93,7 +93,8 @@ export default function Navbar({ user }: NavbarProps) {
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="sm:hidden p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-              aria-label="Toggle menu"
+              aria-label="Navigation menu"
+              aria-expanded={menuOpen}
             >
               {menuOpen ? (
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

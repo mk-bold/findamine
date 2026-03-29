@@ -78,7 +78,7 @@ export default function BadgesPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-400">
+        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
           {filter === "earned" ? "No badges earned yet. Keep exploring!" : "No badges to show."}
         </div>
       ) : (
@@ -115,7 +115,7 @@ export default function BadgesPage() {
                         <p className={`text-sm font-medium ${badge.earned ? "text-gray-900" : "text-gray-500"}`}>
                           {badge.display_name}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">{badge.description}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{badge.description}</p>
                         {badge.earned && badge.earned_at && (
                           <p className="text-[10px] text-sky-600 mt-1">
                             Earned {new Date(badge.earned_at).toLocaleDateString()}

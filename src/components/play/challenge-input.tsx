@@ -193,6 +193,7 @@ function NumericEntry({
           onChange={(e) => onAnswerChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          aria-label={question || "Enter your numeric answer"}
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
           onKeyDown={(e) => e.key === "Enter" && onSubmit()}
         />
@@ -254,13 +255,13 @@ function SortingOrdering({
             key={item}
             className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm"
           >
-            <span className="text-gray-400 font-mono text-xs w-5">{idx + 1}.</span>
+            <span className="text-gray-500 font-mono text-xs w-5">{idx + 1}.</span>
             <span className="flex-1">{item}</span>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => moveItem(idx, idx - 1)}
                 disabled={idx === 0 || disabled}
-                className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-xs leading-none"
+                className="text-gray-500 hover:text-gray-700 disabled:opacity-20 text-xs leading-none"
                 aria-label="Move up"
               >
                 ▲
@@ -268,7 +269,7 @@ function SortingOrdering({
               <button
                 onClick={() => moveItem(idx, idx + 1)}
                 disabled={idx === order.length - 1 || disabled}
-                className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-xs leading-none"
+                className="text-gray-500 hover:text-gray-700 disabled:opacity-20 text-xs leading-none"
                 aria-label="Move down"
               >
                 ▼
@@ -335,7 +336,7 @@ function PhotoObservation({
           <img src={preview} alt="Your observation" className="rounded-lg max-h-48 mx-auto mb-2" />
           <button
             onClick={() => { setPreview(null); onAnswerChange(observation); }}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-gray-500 hover:text-gray-600"
           >
             Retake photo
           </button>
@@ -364,6 +365,7 @@ function PhotoObservation({
         placeholder="Describe what you observe..."
         rows={3}
         disabled={disabled}
+        aria-label="Describe what you observe"
         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 mb-3 resize-y"
       />
 
@@ -495,11 +497,11 @@ function SketchDraw({
         <button
           onClick={clearCanvas}
           disabled={disabled}
-          className="text-xs text-gray-400 hover:text-gray-600"
+          className="text-xs text-gray-500 hover:text-gray-600"
         >
           Clear drawing
         </button>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-500">
           {hasDrawn ? "Drawing captured" : "Draw with your finger or mouse"}
         </span>
       </div>
@@ -632,7 +634,7 @@ function AudioResponse({
             <p className="text-xs text-gray-500 mb-2">Duration: {formatTime(duration)}</p>
             <button
               onClick={resetRecording}
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-xs text-gray-500 hover:text-gray-600"
             >
               Record again
             </button>
@@ -647,7 +649,7 @@ function AudioResponse({
             >
               Start Recording
             </button>
-            <p className="text-xs text-gray-400 mt-2">Tap to record your spoken answer</p>
+            <p className="text-xs text-gray-500 mt-2">Tap to record your spoken answer</p>
           </div>
         )}
       </div>
@@ -689,6 +691,7 @@ function TextInput({
           placeholder="Your answer..."
           disabled={disabled}
           rows={5}
+          aria-label="Your answer"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 mb-3 resize-y"
         />
       ) : (
@@ -697,6 +700,7 @@ function TextInput({
           onChange={(e) => onAnswerChange(e.target.value)}
           placeholder="Your answer..."
           disabled={disabled}
+          aria-label="Your answer"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 mb-3"
           onKeyDown={(e) => e.key === "Enter" && onSubmit()}
         />

@@ -93,7 +93,7 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p className="p-8 text-center text-sm text-gray-400">No scores yet. Be the first!</p>
+        <p className="p-8 text-center text-sm text-gray-500">No scores yet. Be the first!</p>
       ) : (
         <div className="divide-y divide-gray-50">
           {entries.map((entry, i) => (
@@ -103,7 +103,7 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
                 {i < 3 ? (
                   <span className="text-lg">{medals[i]}</span>
                 ) : (
-                  <span className="text-xs font-medium text-gray-400">{i + 1}</span>
+                  <span className="text-xs font-medium text-gray-500">{i + 1}</span>
                 )}
               </div>
 
@@ -113,14 +113,14 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
                   {entry.display_name || "Anonymous"}
                 </p>
                 {entry.hunts_completed != null && (
-                  <p className="text-xs text-gray-400">{entry.hunts_completed} hunts</p>
+                  <p className="text-xs text-gray-500">{entry.hunts_completed} hunts</p>
                 )}
               </div>
 
               {/* Score */}
               <div className="text-right shrink-0">
                 <span className="text-sm font-bold text-sky-600">{entry.score}</span>
-                <span className="text-xs text-gray-400 ml-1">pts</span>
+                <span className="text-xs text-gray-500 ml-1">pts</span>
               </div>
             </div>
           ))}

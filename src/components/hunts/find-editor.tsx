@@ -316,7 +316,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
                   {options.length > 2 && (
                     <button
                       onClick={() => setOptions(options.filter((_, i) => i !== idx))}
-                      className="text-gray-400 hover:text-red-500 text-xs"
+                      className="text-gray-500 hover:text-red-500 text-xs"
                     >
                       Remove
                     </button>
@@ -340,7 +340,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
               <p className="text-xs text-gray-500">Enter items in the correct order (they will be shuffled for players):</p>
               {sortingItems.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 w-5">{idx + 1}.</span>
+                  <span className="text-xs text-gray-500 w-5">{idx + 1}.</span>
                   <input
                     value={item}
                     onChange={(e) => {
@@ -354,7 +354,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
                   {sortingItems.length > 2 && (
                     <button
                       onClick={() => setSortingItems(sortingItems.filter((_, i) => i !== idx))}
-                      className="text-gray-400 hover:text-red-500 text-xs"
+                      className="text-gray-500 hover:text-red-500 text-xs"
                     >
                       Remove
                     </button>
@@ -387,7 +387,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
       {/* ── Primer (optional) ── */}
       <fieldset className="mb-5">
         <legend className="text-sm font-medium text-gray-700 mb-2">
-          Primer <span className="text-gray-400 font-normal">(optional)</span>
+          Primer <span className="text-gray-500 font-normal">(optional)</span>
         </legend>
         <div className="space-y-3">
           <input

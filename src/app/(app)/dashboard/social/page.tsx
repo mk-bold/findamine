@@ -87,7 +87,7 @@ export default function SocialPage() {
               </h2>
             </div>
             {acceptedFriends.length === 0 ? (
-              <p className="p-6 text-center text-sm text-gray-400">No friends yet.</p>
+              <p className="p-6 text-center text-sm text-gray-500">No friends yet.</p>
             ) : (
               <div className="divide-y divide-gray-50">
                 {acceptedFriends.map((f) => (
@@ -152,13 +152,13 @@ export default function SocialPage() {
             )}
 
             {kudos.length === 0 ? (
-              <p className="p-6 text-center text-sm text-gray-400">No kudos yet.</p>
+              <p className="p-6 text-center text-sm text-gray-500">No kudos yet.</p>
             ) : (
               <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
                 {kudos.map((k) => (
                   <div key={k.id} className="px-4 py-3">
                     <p className="text-sm text-gray-900">&ldquo;{k.message}&rdquo;</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       {k.sender?.display_name || "Someone"} &rarr; {k.receiver?.display_name || "Someone"}
                       {" "}&middot;{" "}
                       {new Date(k.created_at).toLocaleDateString()}

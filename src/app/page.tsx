@@ -123,7 +123,7 @@ export default function Home() {
                   {s.icon}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Step {s.step}</div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Step {s.step}</div>
                   <div className="font-semibold text-sm text-gray-900">{s.name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>
                 </div>
@@ -159,7 +159,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-gray-100">
-        <div className="mx-auto max-w-5xl px-6 py-6 flex flex-wrap items-center justify-between gap-4 text-sm text-gray-400">
+        <div className="mx-auto max-w-5xl px-6 py-6 flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500">
           <div className="font-bold text-gray-900">findamine</div>
           <div className="flex gap-6">
             <Link href="/browse" className="hover:text-gray-600">Browse Hunts</Link>

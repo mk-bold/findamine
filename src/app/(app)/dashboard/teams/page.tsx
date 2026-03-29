@@ -50,7 +50,7 @@ export default function TeamsPage() {
           {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-gray-100 rounded-lg" />)}
         </div>
       ) : teams.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-400">
+        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
           <p>You haven&apos;t joined any teams yet.</p>
           <p className="text-xs mt-1">Join a team hunt from the <Link href="/browse" className="text-sky-600 hover:underline">Browse</Link> page.</p>
         </div>
@@ -67,12 +67,12 @@ export default function TeamsPage() {
                     }`}>
                       {team.status}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-500">
                       {team.team_members?.length || 0} members
                     </span>
                   </div>
                   {team.team_members && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       {team.team_members.map((m) => m.users?.display_name || "Player").join(", ")}
                     </p>
                   )}

@@ -122,7 +122,7 @@ export default function NewHuntPage() {
             <option value="codename_chosen">Player-Chosen Names</option>
             <option value="real_name">Real Names</option>
           </select>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Controls how players appear on leaderboards. Children&apos;s names are always protected.
           </p>
         </div>

@@ -67,7 +67,7 @@ export default function LocationPicker({
   if (!isLoaded) {
     return (
       <div style={containerStyle} className="bg-gray-100 animate-pulse flex items-center justify-center">
-        <span className="text-sm text-gray-400">Loading map...</span>
+        <span className="text-sm text-gray-500">Loading map...</span>
       </div>
     );
   }
@@ -81,6 +81,7 @@ export default function LocationPicker({
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="Search address or place..."
+          aria-label="Search for an address or place"
           className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
         <button
@@ -125,7 +126,7 @@ export default function LocationPicker({
         )}
       </GoogleMap>
 
-      <p className="text-[10px] text-gray-400">
+      <p className="text-[10px] text-gray-500">
         Click the map to set the location, or search for an address above.
       </p>
     </div>

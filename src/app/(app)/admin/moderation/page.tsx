@@ -50,7 +50,7 @@ export default function ModerationPage() {
           {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-gray-100 rounded-lg" />)}
         </div>
       ) : reports.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-400">
+        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
           No pending reports. All clear.
         </div>
       ) : (
@@ -61,7 +61,7 @@ export default function ModerationPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{r.entity_type} report</p>
                   <p className="text-sm text-gray-600 mt-1">{r.reason}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {new Date(r.created_at).toLocaleDateString()}
                   </p>
                 </div>

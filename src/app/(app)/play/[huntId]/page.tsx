@@ -427,7 +427,7 @@ export default function PlayPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 mb-4 flex justify-between items-center">
+        <div role="alert" className="rounded-md bg-red-50 border border-red-200 px-4 py-3 mb-4 flex justify-between items-center">
           <p className="text-sm text-red-700">{error}</p>
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 text-sm ml-4">
             Dismiss
@@ -440,7 +440,7 @@ export default function PlayPage() {
         <span>Stop {currentIndex + 1} of {finds.length}</span>
         <span>{totalCompleted}/{finds.length} completed</span>
       </div>
-      <div className="h-2 rounded-full bg-gray-200 mb-4">
+      <div className="h-2 rounded-full bg-gray-200 mb-4" role="progressbar" aria-valuenow={totalCompleted} aria-valuemin={0} aria-valuemax={finds.length} aria-label={`Hunt progress: ${totalCompleted} of ${finds.length} stops completed`}>
         <div
           className="h-2 rounded-full progress-fill"
           style={{ width: `${(totalCompleted / finds.length) * 100}%` }}
@@ -449,7 +449,7 @@ export default function PlayPage() {
 
       <StopFlowStepper currentStep={step} />
 
-      <div className="card-themed mb-6 min-h-[300px]">
+      <div className="card-themed mb-6 min-h-[300px]" aria-live="polite">
         {/* ── PRIME ── */}
         {step === "prime" && currentFind?.primers && (
           <div>
@@ -496,7 +496,7 @@ export default function PlayPage() {
 
             {/* GPS error states */}
             {gpsStatus === "denied" && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+              <div role="alert" className="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
                 <p className="text-sm font-medium text-red-800 mb-1">Location Access Denied</p>
                 <p className="text-xs text-red-600 mb-3">
                   Please enable location access in your browser settings to use GPS navigation.
@@ -511,7 +511,7 @@ export default function PlayPage() {
             )}
 
             {gpsStatus === "unavailable" && (
-              <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 mb-4">
+              <div role="alert" className="rounded-lg bg-orange-50 border border-orange-200 p-4 mb-4">
                 <p className="text-sm font-medium text-orange-800 mb-1">GPS Not Available</p>
                 <p className="text-xs text-orange-600 mb-3">
                   Your device doesn&apos;t have GPS or it&apos;s not working right now.
@@ -526,7 +526,7 @@ export default function PlayPage() {
             )}
 
             {gpsStatus === "timeout" && (
-              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-4">
+              <div role="alert" className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-4">
                 <p className="text-sm font-medium text-yellow-800 mb-1">GPS Signal Weak</p>
                 <p className="text-xs text-yellow-600 mb-3">
                   Try moving to an open area for better signal, or skip navigation.
@@ -583,13 +583,13 @@ export default function PlayPage() {
                         </svg>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-400 mt-2">Acquiring GPS signal...</p>
+                    <p className="text-sm text-gray-500 mt-2">Acquiring GPS signal...</p>
                   </div>
                 )}
 
                 <button
                   onClick={handleSkipNav}
-                  className="text-sm text-gray-400 hover:text-gray-600 underline"
+                  className="text-sm text-gray-500 hover:text-gray-600 underline"
                 >
                   I&apos;m already here (skip navigation)
                 </button>
@@ -647,7 +647,7 @@ export default function PlayPage() {
             <button
               onClick={handleRequestHint}
               disabled={hintLevel >= 4}
-              className="text-sm text-sky-600 hover:underline disabled:text-gray-400"
+              className="text-sm text-sky-600 hover:underline disabled:text-gray-500"
             >
               {hintLevel === 0 ? "Need a hint?" : hintLevel < 4 ? `Get more help (Level ${hintLevel + 1})` : "No more hints available"}
             </button>
@@ -689,7 +689,7 @@ export default function PlayPage() {
             </label>
 
             <div>
-              <button onClick={handleCaptureSkip} className="text-sm text-gray-400 hover:text-gray-600 underline">
+              <button onClick={handleCaptureSkip} className="text-sm text-gray-500 hover:text-gray-600 underline">
                 Skip photo
               </button>
             </div>
@@ -724,22 +724,22 @@ export default function PlayPage() {
               <div className="grid grid-cols-3 gap-2 mb-4 text-center text-xs">
                 <div className="rounded bg-gray-50 p-2">
                   <div className="font-bold text-gray-700">{breakdown.correctness}</div>
-                  <div className="text-gray-400">Accuracy</div>
+                  <div className="text-gray-500">Accuracy</div>
                 </div>
                 <div className="rounded bg-gray-50 p-2">
                   <div className="font-bold text-gray-700">{breakdown.masteryBonus}</div>
-                  <div className="text-gray-400">Mastery</div>
+                  <div className="text-gray-500">Mastery</div>
                 </div>
                 <div className="rounded bg-gray-50 p-2">
                   <div className="font-bold text-gray-700">{breakdown.completion}</div>
-                  <div className="text-gray-400">Completion</div>
+                  <div className="text-gray-500">Completion</div>
                 </div>
               </div>
             )}
 
             {/* Show "completed" for revisited finds that have no live score */}
             {score === null && completedFinds.has(currentFind?.id || "") && (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-gray-500">
                 <p className="text-sm">You already completed this stop.</p>
               </div>
             )}

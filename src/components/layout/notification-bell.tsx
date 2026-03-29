@@ -58,16 +58,23 @@ export default function NotificationBell() {
     };
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click or Escape
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      };
     }
   }, [open]);
 
@@ -96,7 +103,9 @@ export default function NotificationBell() {
       <button
         onClick={() => { setOpen(!open); if (!open) fetchNotifications(); }}
         className="relative p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
-        aria-label="Notifications"
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+        aria-expanded={open}
+        aria-haspopup="true"
       >
         {/* Bell icon */}
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -130,7 +139,7 @@ export default function NotificationBell() {
                 {[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-gray-50 rounded animate-pulse" />)}
               </div>
             ) : notifications.length === 0 ? (
-              <p className="p-6 text-center text-sm text-gray-400">No notifications</p>
+              <p className="p-6 text-center text-sm text-gray-500">No notifications</p>
             ) : (
               notifications.map((n) => (
                 <button
@@ -151,7 +160,7 @@ export default function NotificationBell() {
                       {n.body && (
                         <p className="text-xs text-gray-500 mt-0.5 truncate">{n.body}</p>
                       )}
-                      <p className="text-[10px] text-gray-400 mt-1">
+                      <p className="text-[10px] text-gray-500 mt-1">
                         {formatTimeAgo(n.created_at)}
                       </p>
                     </div>

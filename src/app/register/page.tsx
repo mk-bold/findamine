@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 max={new Date().toISOString().split("T")[0]}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
               />
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-gray-500">
                 You must be 13 or older to create your own account.
               </p>
             </div>

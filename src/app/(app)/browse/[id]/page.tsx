@@ -70,7 +70,7 @@ export default async function HuntDetailPage({
                     <p className="text-sm text-gray-500 mt-0.5">{find.clue_text}</p>
                   )}
                   {find.tasks && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-500">
                       {(find.tasks as { challenge_type: string }).challenge_type.replace(/_/g, " ")}
                     </span>
                   )}

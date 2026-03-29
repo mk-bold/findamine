@@ -55,7 +55,7 @@ export default async function MyHuntsPage() {
             >
               <div>
                 <h3 className="font-medium text-gray-900">{hunt.title}</h3>
-                <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                   <span className={`rounded-full px-2 py-0.5 ${
                     hunt.status === "published"
                       ? "bg-green-50 text-green-700"
@@ -66,7 +66,7 @@ export default async function MyHuntsPage() {
                   <span>{hunt.target_audience}</span>
                 </div>
               </div>
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-gray-500">
                 {new Date(hunt.created_at).toLocaleDateString()}
               </span>
             </Link>

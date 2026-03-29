@@ -153,9 +153,9 @@ export default function HuntDetailPage() {
             }`}>
               {hunt.status}
             </span>
-            <span className="text-xs text-gray-400">{hunt.target_audience}</span>
-            <span className="text-xs text-gray-400">{hunt.play_mode.replace(/_/g, " ")}</span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">{hunt.target_audience}</span>
+            <span className="text-xs text-gray-500">{hunt.play_mode.replace(/_/g, " ")}</span>
+            <span className="text-xs text-gray-500">
               {hunt.identity_mode === "codename_assigned"
                 ? "Random codenames"
                 : hunt.identity_mode === "codename_chosen"
@@ -163,7 +163,7 @@ export default function HuntDetailPage() {
                 : "Real names"}
             </span>
             {hunt.estimated_duration_min && (
-              <span className="text-xs text-gray-400">{hunt.estimated_duration_min} min</span>
+              <span className="text-xs text-gray-500">{hunt.estimated_duration_min} min</span>
             )}
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function HuntDetailPage() {
 
         {finds.length === 0 && !showEditor && (
           <div className="rounded-lg border-2 border-dashed border-gray-200 p-8 text-center">
-            <p className="text-gray-400 mb-3">No stops yet. Add your first stop to start building the hunt.</p>
+            <p className="text-gray-500 mb-3">No stops yet. Add your first stop to start building the hunt.</p>
             {isDraft && (
               <button
                 onClick={() => setShowEditor(true)}
@@ -253,7 +253,7 @@ export default function HuntDetailPage() {
                       </span>
                     )}
                     {find.locations && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         {find.locations.latitude.toFixed(4)}, {find.locations.longitude.toFixed(4)}
                       </span>
                     )}
@@ -264,25 +264,28 @@ export default function HuntDetailPage() {
                 {isDraft && (
                   <div className="flex flex-col gap-1 shrink-0">
                     <button
+                      type="button"
                       onClick={() => handleMoveFind(find.id, "up")}
                       disabled={i === 0}
-                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-xs"
-                      aria-label="Move up"
+                      className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-sm"
+                      aria-label={`Move ${find.locations?.name || `stop ${i + 1}`} up`}
                     >
                       ▲
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleMoveFind(find.id, "down")}
                       disabled={i === finds.length - 1}
-                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-xs"
-                      aria-label="Move down"
+                      className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-sm"
+                      aria-label={`Move ${find.locations?.name || `stop ${i + 1}`} down`}
                     >
                       ▼
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDeleteFind(find.id)}
-                      className="text-gray-400 hover:text-red-500 text-xs mt-1"
-                      aria-label="Delete"
+                      className="w-8 h-8 flex items-center justify-center rounded text-gray-500 hover:text-red-500 hover:bg-red-50 text-sm"
+                      aria-label={`Delete ${find.locations?.name || `stop ${i + 1}`}`}
                     >
                       &times;
                     </button>

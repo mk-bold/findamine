@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const STEPS = [
   {
@@ -49,14 +49,24 @@ export default function Onboarding() {
     check();
   }, []);
 
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
     setShow(false);
     await fetch("/api/v1/onboarding", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ milestone_type: "onboarding_complete" }),
     });
-  };
+  }, []);
+
+  // Escape key to dismiss
+  useEffect(() => {
+    if (!show) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleComplete();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [show, handleComplete]);
 
   const handleNext = () => {
     if (step < STEPS.length - 1) {
@@ -71,7 +81,7 @@ export default function Onboarding() {
   const current = STEPS[step];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-label="Welcome tutorial">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
         {/* Step indicator */}
         <div className="flex gap-1 mb-6 justify-center">
@@ -110,7 +120,7 @@ export default function Onboarding() {
 
         <button
           onClick={handleComplete}
-          className="block w-full mt-3 text-xs text-gray-400 hover:text-gray-600 text-center"
+          className="block w-full mt-3 text-xs text-gray-500 hover:text-gray-600 text-center"
         >
           Skip tutorial
         </button>

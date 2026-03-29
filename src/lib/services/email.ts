@@ -5,7 +5,18 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization — avoids build failure when RESEND_API_KEY isn't set
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) {
+      throw new Error("RESEND_API_KEY environment variable is not set");
+    }
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || "findamine <noreply@findamine.app>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findamine.app";
@@ -29,7 +40,7 @@ export async function sendConsentVerificationEmail(opts: {
   const verifyUrl = `${SITE_URL}/api/v1/consent/coppa/verify?token=${opts.verificationToken}&child_id=${opts.childId}`;
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_ADDRESS,
       to: opts.parentEmail,
       subject: `Verify your child's findamine account`,

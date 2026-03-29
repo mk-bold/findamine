@@ -108,7 +108,7 @@ export default function TeamChat({ teamId, currentUserId }: TeamChatProps) {
             {[...Array(3)].map((_, i) => <div key={i} className="h-8 bg-gray-100 rounded w-3/4" />)}
           </div>
         ) : messages.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">No messages yet. Start the conversation!</p>
+          <p className="text-sm text-gray-500 text-center py-8">No messages yet. Start the conversation!</p>
         ) : (
           messages.map((msg) => {
             const isMe = msg.user_id === currentUserId;
@@ -123,7 +123,7 @@ export default function TeamChat({ teamId, currentUserId }: TeamChatProps) {
                     </p>
                   )}
                   <p className="text-sm">{msg.message}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
+                  <p className="text-[10px] text-gray-500 mt-0.5">
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -141,6 +141,7 @@ export default function TeamChat({ teamId, currentUserId }: TeamChatProps) {
           onChange={(e) => setInput(e.target.value.slice(0, 280))}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Type a message..."
+          aria-label="Chat message"
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
         <button
@@ -151,7 +152,7 @@ export default function TeamChat({ teamId, currentUserId }: TeamChatProps) {
           Send
         </button>
       </div>
-      <p className="text-[10px] text-gray-400 text-right px-3 pb-1">{input.length}/280</p>
+      <p className="text-[10px] text-gray-500 text-right px-3 pb-1">{input.length}/280</p>
     </div>
   );
 }
