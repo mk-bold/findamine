@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import StopFlowStepper from "@/components/play/stop-flow-stepper";
 import HotColdMeter from "@/components/play/hot-cold-meter";
 import ChallengeInput from "@/components/play/challenge-input";
+import NavigateMap from "@/components/maps/navigate-map";
 import { Celebration } from "@/components/ui/celebration";
 
 type StopStep = "prime" | "clue" | "navigate" | "challenge" | "capture" | "feedback";
@@ -62,6 +63,7 @@ export default function PlayPage() {
   const [error, setError] = useState<string | null>(null);
   const [completedFinds, setCompletedFinds] = useState<Set<string>>(new Set());
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("waiting");
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState("");
   const [huntComplete, setHuntComplete] = useState(false);
@@ -159,6 +161,7 @@ export default function PlayPage() {
     watchId = navigator.geolocation.watchPosition(
       async (pos) => {
         setGpsStatus("active");
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         try {
           const res = await safeFetch(`/api/v1/play/${huntId}/arrive`, {
             method: "POST",
@@ -546,8 +549,22 @@ export default function PlayPage() {
             {/* Active GPS / waiting states */}
             {(gpsStatus === "waiting" || gpsStatus === "active") && (
               <>
+                {/* Map + Hot/Cold side by side */}
+                {currentFind?.locations && (
+                  <div className="mb-4">
+                    <NavigateMap
+                      targetLat={(currentFind.locations as { latitude: number }).latitude}
+                      targetLng={(currentFind.locations as { longitude: number }).longitude}
+                      radiusMeters={(currentFind.locations as { radius_meters: number }).radius_meters || 50}
+                      userLat={userPos?.lat ?? null}
+                      userLng={userPos?.lng ?? null}
+                      zone={hotCold?.zone ?? null}
+                    />
+                  </div>
+                )}
+
                 {hotCold ? (
-                  <div className="flex justify-center mb-6">
+                  <div className="flex justify-center mb-4">
                     <HotColdMeter
                       zone={hotCold.zone}
                       color={hotCold.color}
@@ -557,7 +574,7 @@ export default function PlayPage() {
                     />
                   </div>
                 ) : (
-                  <div className="mb-6">
+                  <div className="mb-4">
                     <div className="animate-pulse flex justify-center">
                       <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center text-2xl">
                         <svg className="animate-spin h-8 w-8 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import LocationPicker from "@/components/maps/location-picker";
 
 interface FindEditorProps {
   huntId: string;
@@ -228,6 +229,15 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
               className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
+          <LocationPicker
+            latitude={latitude ? parseFloat(latitude) : null}
+            longitude={longitude ? parseFloat(longitude) : null}
+            radiusMeters={parseInt(radiusMeters) || 50}
+            onLocationChange={(lat, lng) => {
+              setLatitude(lat.toFixed(6));
+              setLongitude(lng.toFixed(6));
+            }}
+          />
           <button
             type="button"
             onClick={handleUseMyLocation}
