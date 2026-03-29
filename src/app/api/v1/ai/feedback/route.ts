@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { aiLimiter } from "@/lib/utils/rate-limit";
 import { generateFeedback } from "@/lib/services/findbot";
 import type { AgeBand } from "@/lib/themes/tokens";
 
 export async function POST(request: NextRequest) {
   try {
+    aiLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 

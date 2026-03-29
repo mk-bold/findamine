@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { aiLimiter } from "@/lib/utils/rate-limit";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { generateContent } from "@/lib/services/findbot";
 import type { AgeBand } from "@/lib/themes/tokens";
 
 export async function POST(request: NextRequest) {
   try {
+    aiLimiter.check(request);
     const user = await getAuthUser(request);
     requireRole(user, "teacher", "game_master", "admin", "researcher");
 

@@ -220,11 +220,23 @@ export async function evaluateBadges(
   const earned: string[] = [];
 
   if (event === "find_complete") {
-    // FIRST_FIND
-    const { count: findCount } = await supabase
-      .from("find_completions")
-      .select("*", { count: "exact", head: true })
-      .eq("play_session_id", userId); // Would need proper join
+    // FIRST_FIND — count completions across all of this user's sessions
+    const { data: userSessions } = await supabase
+      .from("play_sessions")
+      .select("id")
+      .eq("user_id", userId);
+
+    const sessionIds = (userSessions || []).map((s) => s.id);
+
+    let findCount = 0;
+    if (sessionIds.length > 0) {
+      const { count } = await supabase
+        .from("find_completions")
+        .select("*", { count: "exact", head: true })
+        .in("play_session_id", sessionIds)
+        .not("completed_at", "is", null);
+      findCount = count || 0;
+    }
 
     if (findCount === 1) {
       if (await tryAwardBadge(userId, "FIRST_FIND")) earned.push("FIRST_FIND");

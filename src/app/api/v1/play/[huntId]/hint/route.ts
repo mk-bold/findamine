@@ -50,19 +50,17 @@ export async function POST(
     if (task) {
       const { data: cached } = await supabase
         .from("ai_hint_cache")
-        .select("hint_text")
+        .select("id, hint_text")
         .eq("task_id", task.id)
         .eq("hint_level", hintLevel)
         .eq("status", "active")
         .maybeSingle();
 
       if (cached) {
-        // Increment usage
-        await supabase
-          .from("ai_hint_cache")
-          .update({ usage_count: 1 }) // Will be incremented properly with RPC later
-          .eq("task_id", task.id)
-          .eq("hint_level", hintLevel);
+        // Atomically increment usage count
+        await supabase.rpc("increment_hint_usage", {
+          p_cache_id: cached.id,
+        });
 
         // Update completion hints_used
         await supabase

@@ -56,3 +56,5 @@ export type TeamStatus =
 export type TeamMemberRole = "captain" | "member";
 
 export type ModerationStatus = "pending" | "approved" | "rejected";
+
+export type IdentityMode = "codename_assigned" | "codename_chosen" | "real_name";

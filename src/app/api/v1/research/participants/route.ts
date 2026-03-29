@@ -54,11 +54,10 @@ export async function POST(request: NextRequest) {
 
       if (error) throw new ApiError(500, error.message);
 
-      // Increment sample size (best effort)
-      await supabase
-        .from("treatment_studies")
-        .update({ current_sample_size: 1 })
-        .eq("id", body.study_id);
+      // Atomically increment sample size
+      await supabase.rpc("increment_sample_size", {
+        p_study_id: body.study_id,
+      });
 
       return Response.json({ enrollment: data }, { status: 201 });
     }

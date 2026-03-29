@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { errorResponse, ApiError, sanitizeFilterInput } from "@/lib/utils/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get("q");
     if (!q || q.length < 2) throw new ApiError(400, "Query must be at least 2 characters");
 
+    const safeQ = sanitizeFilterInput(q);
     const limit = parseInt(searchParams.get("limit") || "20");
     const supabase = await createSupabaseServiceClient();
 
@@ -18,19 +19,19 @@ export async function GET(request: NextRequest) {
         .select("id, title, description, status")
         .is("deleted_at", null)
         .eq("is_public", true)
-        .textSearch("search_vector", q, { type: "websearch" })
+        .textSearch("search_vector", safeQ, { type: "websearch" })
         .limit(limit),
       supabase
         .from("tasks")
         .select("id, title, subject_domain, challenge_type")
         .is("deleted_at", null)
-        .or(`title.ilike.%${q}%,description.ilike.%${q}%`)
+        .or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`)
         .limit(limit),
       supabase
         .from("locations")
         .select("id, name, address")
         .is("deleted_at", null)
-        .or(`name.ilike.%${q}%,address.ilike.%${q}%`)
+        .or(`name.ilike.%${safeQ}%,address.ilike.%${safeQ}%`)
         .limit(limit),
     ]);
 

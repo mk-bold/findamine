@@ -2,9 +2,11 @@ import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { authLimiter } from "@/lib/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    authLimiter.check(request);
     const body = await request.json();
     const { email, password } = body;
 

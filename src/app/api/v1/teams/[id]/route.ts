@@ -8,6 +8,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
     const supabase = await createSupabaseServiceClient();
 
     const { data, error } = await supabase
@@ -17,6 +20,25 @@ export async function GET(
       .single();
 
     if (error || !data) throw new ApiError(404, "Team not found");
+
+    // Admins/researchers can view any team; others must be a member or
+    // the creator of the hunt this team belongs to
+    if (!["admin", "researcher"].includes(user.role)) {
+      const isMember = data.team_members?.some(
+        (m: { user_id: string }) => m.user_id === user.id
+      );
+      if (!isMember) {
+        // Check if user owns the hunt
+        const { data: hunt } = await supabase
+          .from("hunts")
+          .select("created_by")
+          .eq("id", data.hunt_id)
+          .single();
+        if (!hunt || hunt.created_by !== user.id) {
+          throw new ApiError(403, "Not authorized to view this team");
+        }
+      }
+    }
 
     return Response.json({ team: data });
   } catch (error) {

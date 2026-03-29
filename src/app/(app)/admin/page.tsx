@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export default async function AdminPage() {
@@ -56,12 +57,12 @@ export default async function AdminPage() {
 
 function AdminLink({ href, title, desc }: { href: string; title: string; desc: string }) {
   return (
-    <a
+    <Link
       href={href}
       className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-sky-200 transition-colors"
     >
       <h3 className="font-semibold text-gray-900">{title}</h3>
       <p className="text-sm text-gray-500 mt-1">{desc}</p>
-    </a>
+    </Link>
   );
 }

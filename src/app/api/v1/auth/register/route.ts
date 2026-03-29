@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { authLimiter } from "@/lib/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    authLimiter.check(request);
     const body = await request.json();
     const { email, password, display_name, role, date_of_birth } = body;
 
@@ -11,16 +13,16 @@ export async function POST(request: NextRequest) {
       throw new ApiError(400, "Email and password are required");
     }
 
-    const validRoles = [
+    // Only allow self-registration for these roles.
+    // Admin and researcher accounts must be created via the admin panel.
+    const selfRegisterRoles = [
       "child",
       "teen",
       "parent",
       "teacher",
       "game_master",
-      "admin",
-      "researcher",
     ];
-    const userRole = validRoles.includes(role) ? role : "parent";
+    const userRole = selfRegisterRoles.includes(role) ? role : "parent";
 
     const supabase = await createSupabaseServiceClient();
 

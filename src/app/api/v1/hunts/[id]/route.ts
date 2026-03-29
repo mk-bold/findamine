@@ -24,6 +24,18 @@ export async function GET(
 
     if (error || !hunt) throw new ApiError(404, "Hunt not found");
 
+    // Draft/unpublished hunts are only visible to their owner or admins
+    if (hunt.status === "draft") {
+      const user = await getAuthUser(request);
+      if (
+        !user ||
+        (hunt.created_by !== user.id &&
+          !["admin", "researcher"].includes(user.role))
+      ) {
+        throw new ApiError(404, "Hunt not found");
+      }
+    }
+
     // Sort finds by order
     if (hunt.finds) {
       hunt.finds.sort(
@@ -70,7 +82,7 @@ export async function PUT(
       "center_latitude", "center_longitude", "search_radius_km",
       "estimated_duration_min", "grade_range_min", "grade_range_max",
       "subject_domains", "max_teams", "min_team_size", "max_team_size",
-      "allow_late_join", "is_template", "metadata",
+      "allow_late_join", "identity_mode", "is_template", "metadata",
     ];
 
     const updates: Record<string, unknown> = {};

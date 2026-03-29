@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { aiLimiter } from "@/lib/utils/rate-limit";
 import { generateHint } from "@/lib/services/findbot";
 import type { AgeBand } from "@/lib/themes/tokens";
 
 export async function POST(request: NextRequest) {
   try {
+    aiLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 
@@ -49,10 +51,9 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (cached) {
-        await supabase
-          .from("ai_hint_cache")
-          .update({ usage_count: 1 })
-          .eq("id", cached.id);
+        await supabase.rpc("increment_hint_usage", {
+          p_cache_id: cached.id,
+        });
 
         return Response.json({ hint: cached.hint_text, level: hintLevel, source: "cache" });
       }

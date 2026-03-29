@@ -23,6 +23,7 @@ export default function NewHuntPage() {
         description: form.get("description"),
         target_audience: form.get("target_audience"),
         play_mode: form.get("play_mode"),
+        identity_mode: form.get("identity_mode"),
         estimated_duration_min: form.get("duration") ? parseInt(form.get("duration") as string) : null,
       }),
     });
@@ -106,6 +107,24 @@ export default function NewHuntPage() {
               <option value="team_assigned">Teams (assigned)</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="identity_mode" className="block text-sm font-medium text-gray-700">
+            Leaderboard Identity
+          </label>
+          <select
+            id="identity_mode"
+            name="identity_mode"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="codename_assigned">Random Codenames (default, most private)</option>
+            <option value="codename_chosen">Player-Chosen Names</option>
+            <option value="real_name">Real Names</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">
+            Controls how players appear on leaderboards. Children&apos;s names are always protected.
+          </p>
         </div>
 
         <div>

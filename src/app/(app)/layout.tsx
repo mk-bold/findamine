@@ -1,5 +1,6 @@
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/navbar";
+import Onboarding from "@/components/layout/onboarding";
 import { AgeBandProvider } from "@/lib/themes/age-band-provider";
 import type { AgeBand } from "@/lib/themes/tokens";
 
@@ -36,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AgeBandProvider initialBand={ageBand}>
       <Navbar user={profile} />
+      {profile && <Onboarding />}
       {children}
     </AgeBandProvider>
   );

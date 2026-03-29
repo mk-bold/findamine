@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import StopFlowStepper from "@/components/play/stop-flow-stepper";
 import HotColdMeter from "@/components/play/hot-cold-meter";
+import ChallengeInput from "@/components/play/challenge-input";
+import { Celebration } from "@/components/ui/celebration";
 
 type StopStep = "prime" | "clue" | "navigate" | "challenge" | "capture" | "feedback";
 
@@ -25,6 +27,21 @@ interface HotCold {
   distanceLabel: string;
 }
 
+// ── Helpers ──────────────────────────────────────────
+
+type GpsStatus = "waiting" | "active" | "denied" | "unavailable" | "timeout";
+
+async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  return res;
+}
+
+// ── Component ────────────────────────────────────────
+
 export default function PlayPage() {
   const { huntId } = useParams();
   const router = useRouter();
@@ -42,41 +59,69 @@ export default function PlayPage() {
   const [hintText, setHintText] = useState("");
   const [hintLevel, setHintLevel] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [completedFinds, setCompletedFinds] = useState<Set<string>>(new Set());
+  const [gpsStatus, setGpsStatus] = useState<GpsStatus>("waiting");
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationMessage, setCelebrationMessage] = useState("");
+  const [huntComplete, setHuntComplete] = useState(false);
+  const [huntSummary, setHuntSummary] = useState<{
+    totalScore: number;
+    findsCompleted: number;
+    totalFinds: number;
+    startedAt: string;
+    completedAt: string;
+  } | null>(null);
 
+  const submittingRef = useRef(false);
   const currentFind = finds[currentIndex];
 
-  // Initialize
+  // ── Initialize ──────────────────────────────────────
+
   useEffect(() => {
     async function init() {
-      const findsRes = await fetch(`/api/v1/hunts/${huntId}/finds`);
-      const findsData = await findsRes.json();
-      setFinds(findsData.finds || []);
+      try {
+        const [findsRes, startRes] = await Promise.all([
+          safeFetch(`/api/v1/hunts/${huntId}/finds`),
+          safeFetch(`/api/v1/play/${huntId}/start`, { method: "POST" }),
+        ]);
 
-      await fetch(`/api/v1/play/${huntId}/start`, { method: "POST" });
+        const findsData = await findsRes.json();
+        const startData = await startRes.json();
+        setFinds(findsData.finds || []);
 
-      const progressRes = await fetch(`/api/v1/play/${huntId}/progress`);
-      const progressData = await progressRes.json();
+        // If player has a codename, we could show it — stored in startData.session.codename
 
-      const completed = new Set<string>(
-        (progressData.completions || [])
-          .filter((c: { completed_at: string | null }) => c.completed_at)
-          .map((c: { find_id: string }) => c.find_id)
-      );
-      setCompletedFinds(completed);
+        const progressRes = await safeFetch(`/api/v1/play/${huntId}/progress`);
+        const progressData = await progressRes.json();
 
-      // Jump to first incomplete
-      const nextIdx = (findsData.finds || []).findIndex(
-        (f: Find) => !completed.has(f.id)
-      );
-      if (nextIdx >= 0) setCurrentIndex(nextIdx);
+        const completed = new Set<string>(
+          (progressData.completions || [])
+            .filter((c: { completed_at: string | null }) => c.completed_at)
+            .map((c: { find_id: string }) => c.find_id)
+        );
+        setCompletedFinds(completed);
 
-      setLoading(false);
+        // Jump to first incomplete
+        const allFinds = findsData.finds || [];
+        const nextIdx = allFinds.findIndex((f: Find) => !completed.has(f.id));
+        if (nextIdx >= 0) {
+          setCurrentIndex(nextIdx);
+        } else if (allFinds.length > 0 && completed.size === allFinds.length) {
+          // All finds already completed
+          setHuntComplete(true);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load hunt");
+      } finally {
+        setLoading(false);
+      }
     }
     init();
   }, [huntId]);
 
-  // Reset step state when changing finds
+  // ── Reset step state when changing finds ────────────
+
   useEffect(() => {
     if (!currentFind) return;
     if (completedFinds.has(currentFind.id)) {
@@ -95,17 +140,27 @@ export default function PlayPage() {
     setArrived(false);
     setHintText("");
     setHintLevel(0);
+    setGpsStatus("waiting");
+    setError(null);
   }, [currentIndex, currentFind, completedFinds]);
 
-  // GPS watcher for navigate step
+  // ── GPS watcher for navigate step ──────────────────
+
   useEffect(() => {
     if (step !== "navigate" || !currentFind) return;
 
+    if (!navigator.geolocation) {
+      setGpsStatus("unavailable");
+      return;
+    }
+
     let watchId: number;
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        async (pos) => {
-          const res = await fetch(`/api/v1/play/${huntId}/arrive`, {
+
+    watchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        setGpsStatus("active");
+        try {
+          const res = await safeFetch(`/api/v1/play/${huntId}/arrive`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -121,25 +176,46 @@ export default function PlayPage() {
             setArrived(true);
             setStep("challenge");
           }
-        },
-        undefined,
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-      );
-    }
+        } catch {
+          // Network error during GPS ping — don't block navigation,
+          // just keep trying on next position update
+        }
+      },
+      (err) => {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setGpsStatus("denied");
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setGpsStatus("unavailable");
+            break;
+          case err.TIMEOUT:
+            setGpsStatus("timeout");
+            break;
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
 
     return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
+      navigator.geolocation.clearWatch(watchId);
     };
   }, [step, currentFind, huntId]);
 
+  // ── Handlers ───────────────────────────────────────
+
   const handlePrimeViewed = useCallback(async () => {
     if (!currentFind) return;
-    await fetch(`/api/v1/play/${huntId}/prime-viewed`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ find_id: currentFind.id }),
-    });
-    setStep("clue");
+    try {
+      await safeFetch(`/api/v1/play/${huntId}/prime-viewed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ find_id: currentFind.id }),
+      });
+      setStep("clue");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to record primer view");
+    }
   }, [currentFind, huntId]);
 
   const handleClueRead = useCallback(() => {
@@ -147,47 +223,69 @@ export default function PlayPage() {
   }, []);
 
   const handleSkipNav = useCallback(async () => {
-    // For testing or when GPS unavailable: manually arrive
     if (!currentFind) return;
-    await fetch(`/api/v1/play/${huntId}/arrive`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ find_id: currentFind.id }),
-    });
-    setArrived(true);
-    setStep("challenge");
+    try {
+      await safeFetch(`/api/v1/play/${huntId}/arrive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ find_id: currentFind.id }),
+      });
+      setArrived(true);
+      setStep("challenge");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to record arrival");
+    }
   }, [currentFind, huntId]);
 
   const handleRequestHint = useCallback(async () => {
     if (!currentFind) return;
     const nextLevel = Math.min(4, hintLevel + 1);
-    const res = await fetch(`/api/v1/play/${huntId}/hint`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ find_id: currentFind.id, level: nextLevel }),
-    });
-    const data = await res.json();
-    setHintText(data.hint);
-    setHintLevel(nextLevel);
+    try {
+      const res = await safeFetch(`/api/v1/play/${huntId}/hint`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ find_id: currentFind.id, level: nextLevel }),
+      });
+      const data = await res.json();
+      setHintText(data.hint);
+      setHintLevel(nextLevel);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to get hint");
+    }
   }, [currentFind, huntId, hintLevel]);
 
   const handleSubmitAnswer = useCallback(async () => {
-    if (!currentFind || !answer) return;
-    const res = await fetch(`/api/v1/play/${huntId}/answer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ find_id: currentFind.id, answer }),
-    });
-    const data = await res.json();
+    if (!currentFind || !answer || submittingRef.current) return;
+    submittingRef.current = true;
+    setError(null);
 
-    setFeedback(data.feedback);
-    setScore(data.score);
-    setBreakdown(data.breakdown);
-    setCanRetry(data.can_retry);
+    try {
+      const res = await safeFetch(`/api/v1/play/${huntId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ find_id: currentFind.id, answer }),
+      });
+      const data = await res.json();
 
-    if (data.is_complete) {
-      setCompletedFinds((prev) => new Set([...prev, currentFind.id]));
-      setStep("capture");
+      setFeedback(data.feedback);
+      setScore(data.score);
+      setBreakdown(data.breakdown);
+      setCanRetry(data.can_retry);
+
+      if (data.is_complete) {
+        setCompletedFinds((prev) => new Set([...prev, currentFind.id]));
+        setCelebrationMessage(
+          data.feedback?.type === "correct"
+            ? "Great job! You got it!"
+            : "Nice effort! Moving on."
+        );
+        setShowCelebration(true);
+        setStep("capture");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit answer");
+    } finally {
+      submittingRef.current = false;
     }
   }, [currentFind, huntId, answer]);
 
@@ -202,24 +300,139 @@ export default function PlayPage() {
   }, [currentIndex, finds.length]);
 
   const handleFinishHunt = useCallback(async () => {
-    await fetch(`/api/v1/play/${huntId}/complete`, { method: "POST" });
-    router.push("/dashboard");
-  }, [huntId, router]);
+    try {
+      const res = await safeFetch(`/api/v1/play/${huntId}/complete`, { method: "POST" });
+      const data = await res.json();
+
+      // Build summary from progress data
+      const progressRes = await safeFetch(`/api/v1/play/${huntId}/progress`);
+      const progress = await progressRes.json();
+
+      setHuntSummary({
+        totalScore: progress.session?.total_score || 0,
+        findsCompleted: completedFinds.size,
+        totalFinds: finds.length,
+        startedAt: progress.session?.started_at || "",
+        completedAt: new Date().toISOString(),
+      });
+      setHuntComplete(true);
+      setCelebrationMessage("Hunt Complete!");
+      setShowCelebration(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to complete hunt");
+    }
+  }, [huntId, completedFinds.size, finds.length]);
+
+  // ── Loading / Error states ─────────────────────────
 
   if (loading) {
-    return <main className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">Loading hunt...</main>;
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
+          <div className="h-2 bg-gray-200 rounded" />
+          <div className="h-64 bg-gray-100 rounded-xl" />
+        </div>
+      </main>
+    );
   }
 
-  if (finds.length === 0) {
-    return <main className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">This hunt has no stops.</main>;
+  if (finds.length === 0 && !huntComplete) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">
+        This hunt has no stops yet.
+      </main>
+    );
   }
+
+  // ── Hunt Complete Summary ──────────────────────────
+
+  if (huntComplete) {
+    const elapsed = huntSummary?.startedAt && huntSummary?.completedAt
+      ? Math.round(
+          (new Date(huntSummary.completedAt).getTime() -
+            new Date(huntSummary.startedAt).getTime()) /
+            60000
+        )
+      : null;
+
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-6">
+        <Celebration
+          show={showCelebration}
+          message={celebrationMessage}
+          onComplete={() => setShowCelebration(false)}
+        />
+
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+          <div className="text-5xl mb-4">🏆</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hunt Complete!</h1>
+          <p className="text-gray-500 mb-8">You finished all {finds.length} stops</p>
+
+          {huntSummary && (
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="rounded-lg bg-sky-50 p-4">
+                <div className="text-3xl font-bold text-sky-600">{huntSummary.totalScore}</div>
+                <div className="text-xs text-gray-500 mt-1">Total Points</div>
+              </div>
+              <div className="rounded-lg bg-green-50 p-4">
+                <div className="text-3xl font-bold text-green-600">
+                  {huntSummary.findsCompleted}/{huntSummary.totalFinds}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Stops Completed</div>
+              </div>
+              <div className="rounded-lg bg-purple-50 p-4">
+                <div className="text-3xl font-bold text-purple-600">
+                  {elapsed !== null ? `${elapsed}m` : "--"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Time</div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={() => router.push("/browse")}
+              className="rounded-md border border-gray-300 px-6 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Find More Hunts
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ── Active Play ────────────────────────────────────
 
   const totalCompleted = completedFinds.size;
   const isLastFind = currentIndex === finds.length - 1;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
-      {/* Progress */}
+      <Celebration
+        show={showCelebration}
+        message={celebrationMessage}
+        onComplete={() => setShowCelebration(false)}
+      />
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 mb-4 flex justify-between items-center">
+          <p className="text-sm text-red-700">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 text-sm ml-4">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Progress bar */}
       <div className="flex justify-between text-sm text-gray-500 mb-1">
         <span>Stop {currentIndex + 1} of {finds.length}</span>
         <span>{totalCompleted}/{finds.length} completed</span>
@@ -237,14 +450,12 @@ export default function PlayPage() {
         {/* ── PRIME ── */}
         {step === "prime" && currentFind?.primers && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">📖 Before You Start</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Before You Start</h2>
             <div className="rounded-lg bg-blue-50 p-4 mb-4">
               <h3 className="font-medium text-blue-800 mb-2">
                 {(currentFind.primers as { title: string }).title}
               </h3>
-              <p className="text-sm text-blue-700">
-                {JSON.stringify((currentFind.primers as { content: Record<string, unknown> }).content.text || "Review this concept before continuing.")}
-              </p>
+              <PrimerContent content={(currentFind.primers as { content: Record<string, unknown> }).content} />
             </div>
             <button onClick={handlePrimeViewed} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
               I&apos;m Ready!
@@ -255,7 +466,7 @@ export default function PlayPage() {
         {/* ── CLUE ── */}
         {step === "clue" && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">🔍 Your Clue</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Your Clue</h2>
             <div className="rounded-lg bg-amber-50 p-4 mb-4">
               <p className="text-amber-900">
                 {currentFind?.clue_text || "Head to the next location!"}
@@ -263,11 +474,11 @@ export default function PlayPage() {
             </div>
             {currentFind?.locations && (
               <p className="text-sm text-gray-500 mb-4">
-                📍 Heading to: {(currentFind.locations as { name: string }).name}
+                Heading to: {(currentFind.locations as { name: string }).name}
               </p>
             )}
             <button onClick={handleClueRead} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
-              Start Navigating 🧭
+              Start Navigating
             </button>
           </div>
         )}
@@ -275,45 +486,105 @@ export default function PlayPage() {
         {/* ── NAVIGATE ── */}
         {step === "navigate" && (
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">🧭 Navigate to Location</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Navigate to Location</h2>
             <p className="text-sm text-gray-600 mb-6">
               Walk toward <strong>{currentFind?.locations ? (currentFind.locations as { name: string }).name : "the target"}</strong>
             </p>
 
-            {hotCold ? (
-              <div className="flex justify-center mb-6">
-                <HotColdMeter
-                  zone={hotCold.zone}
-                  color={hotCold.color}
-                  label={hotCold.label}
-                  emoji={hotCold.emoji}
-                  distance={hotCold.distanceLabel}
-                />
-              </div>
-            ) : (
-              <div className="mb-6">
-                <div className="animate-pulse flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center text-2xl">
-                    🧭
-                  </div>
-                </div>
-                <p className="text-sm text-gray-400 mt-2">Waiting for GPS signal...</p>
+            {/* GPS error states */}
+            {gpsStatus === "denied" && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+                <p className="text-sm font-medium text-red-800 mb-1">Location Access Denied</p>
+                <p className="text-xs text-red-600 mb-3">
+                  Please enable location access in your browser settings to use GPS navigation.
+                </p>
+                <button
+                  onClick={handleSkipNav}
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  Skip to Challenge
+                </button>
               </div>
             )}
 
-            <button
-              onClick={handleSkipNav}
-              className="text-sm text-gray-400 hover:text-gray-600 underline"
-            >
-              I&apos;m already here (skip navigation)
-            </button>
+            {gpsStatus === "unavailable" && (
+              <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 mb-4">
+                <p className="text-sm font-medium text-orange-800 mb-1">GPS Not Available</p>
+                <p className="text-xs text-orange-600 mb-3">
+                  Your device doesn&apos;t have GPS or it&apos;s not working right now.
+                </p>
+                <button
+                  onClick={handleSkipNav}
+                  className="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+                >
+                  Skip to Challenge
+                </button>
+              </div>
+            )}
+
+            {gpsStatus === "timeout" && (
+              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 mb-4">
+                <p className="text-sm font-medium text-yellow-800 mb-1">GPS Signal Weak</p>
+                <p className="text-xs text-yellow-600 mb-3">
+                  Try moving to an open area for better signal, or skip navigation.
+                </p>
+                <button
+                  onClick={() => setGpsStatus("waiting")}
+                  className="rounded-md border border-yellow-400 px-3 py-1.5 text-xs text-yellow-700 hover:bg-yellow-100 mr-2"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={handleSkipNav}
+                  className="rounded-md bg-yellow-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-yellow-700"
+                >
+                  Skip to Challenge
+                </button>
+              </div>
+            )}
+
+            {/* Active GPS / waiting states */}
+            {(gpsStatus === "waiting" || gpsStatus === "active") && (
+              <>
+                {hotCold ? (
+                  <div className="flex justify-center mb-6">
+                    <HotColdMeter
+                      zone={hotCold.zone}
+                      color={hotCold.color}
+                      label={hotCold.label}
+                      emoji={hotCold.emoji}
+                      distance={hotCold.distanceLabel}
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-6">
+                    <div className="animate-pulse flex justify-center">
+                      <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center text-2xl">
+                        <svg className="animate-spin h-8 w-8 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-400 mt-2">Acquiring GPS signal...</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSkipNav}
+                  className="text-sm text-gray-400 hover:text-gray-600 underline"
+                >
+                  I&apos;m already here (skip navigation)
+                </button>
+              </>
+            )}
           </div>
         )}
 
         {/* ── CHALLENGE ── */}
         {step === "challenge" && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">🧩 Challenge</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Challenge</h2>
 
             {currentFind?.tasks && (
               <div className="rounded-lg bg-sky-50 p-4 mb-4">
@@ -327,7 +598,7 @@ export default function PlayPage() {
             {hintText && (
               <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 mb-4">
                 <p className="text-sm text-yellow-800">
-                  💡 <strong>Hint (Level {hintLevel}):</strong> {hintText}
+                  <strong>Hint (Level {hintLevel}):</strong> {hintText}
                 </p>
               </div>
             )}
@@ -344,21 +615,16 @@ export default function PlayPage() {
               </div>
             )}
 
-            <div className="flex gap-2 mb-3">
-              <input
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Your answer..."
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                onKeyDown={(e) => e.key === "Enter" && handleSubmitAnswer()}
+            {/* Challenge-type-specific input */}
+            <div className="mb-3">
+              <ChallengeInput
+                challengeType={currentFind?.tasks?.challenge_type || "short_text"}
+                content={currentFind?.tasks?.content || {}}
+                answer={answer}
+                onAnswerChange={setAnswer}
+                onSubmit={handleSubmitAnswer}
+                disabled={submittingRef.current}
               />
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={!answer}
-                className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
-              >
-                Submit
-              </button>
             </div>
 
             <button
@@ -374,7 +640,7 @@ export default function PlayPage() {
         {/* ── CAPTURE ── */}
         {step === "capture" && (
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">📸 Geo-Selfie!</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Geo-Selfie!</h2>
             <p className="text-sm text-gray-600 mb-6">
               Take a photo of yourself at this location to remember your adventure!
             </p>
@@ -389,14 +655,18 @@ export default function PlayPage() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file || !currentFind) return;
-                  const formData = new FormData();
-                  formData.append("file", file);
-                  formData.append("find_id", currentFind.id);
-                  await fetch(`/api/v1/play/${huntId}/capture`, {
-                    method: "POST",
-                    body: formData,
-                  });
-                  setStep("feedback");
+                  try {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("find_id", currentFind.id);
+                    await safeFetch(`/api/v1/play/${huntId}/capture`, {
+                      method: "POST",
+                      body: formData,
+                    });
+                    setStep("feedback");
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to upload photo");
+                  }
                 }}
               />
             </label>
@@ -412,7 +682,7 @@ export default function PlayPage() {
         {/* ── FEEDBACK ── */}
         {step === "feedback" && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">⭐ Results</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Results</h2>
 
             {score !== null && (
               <div className="text-center mb-4">
@@ -450,8 +720,11 @@ export default function PlayPage() {
               </div>
             )}
 
-            {completedFinds.has(currentFind?.id || "") && (
-              <p className="text-sm text-green-600 font-medium mb-4 text-center">✅ Find completed!</p>
+            {/* Show "completed" for revisited finds that have no live score */}
+            {score === null && completedFinds.has(currentFind?.id || "") && (
+              <div className="text-center py-8 text-gray-400">
+                <p className="text-sm">You already completed this stop.</p>
+              </div>
             )}
           </div>
         )}
@@ -473,18 +746,68 @@ export default function PlayPage() {
               onClick={handleFinishHunt}
               className="rounded-md bg-sky-700 px-6 py-2 text-sm font-medium text-white hover:bg-sky-800"
             >
-              🎉 Finish Hunt
+              Finish Hunt
             </button>
           ) : (
             <button
               onClick={handleNextFind}
               className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700"
             >
-              Next Stop →
+              Next Stop
             </button>
           )
         )}
       </div>
     </main>
+  );
+}
+
+// ── Primer Content Renderer ──────────────────────────
+
+function PrimerContent({ content }: { content: Record<string, unknown> }) {
+  const text = (content.text as string) || "";
+  const imageUrl = (content.image_url as string) || (content.imageUrl as string) || "";
+  const videoUrl = (content.video_url as string) || (content.videoUrl as string) || "";
+  const items = content.items as string[] | undefined;
+
+  return (
+    <div className="space-y-3">
+      {text && <p className="text-sm text-blue-700">{text}</p>}
+
+      {items && items.length > 0 && (
+        <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
+          {items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      )}
+
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt="Primer illustration"
+          className="rounded-lg max-h-48 mx-auto"
+        />
+      )}
+
+      {videoUrl && (
+        <div className="aspect-video rounded-lg overflow-hidden">
+          <iframe
+            src={videoUrl}
+            title="Primer video"
+            className="w-full h-full"
+            allowFullScreen
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
+      )}
+
+      {/* Fallback: if content has no recognized fields, show raw text */}
+      {!text && !imageUrl && !videoUrl && !items && (
+        <p className="text-sm text-blue-700">
+          {typeof content === "string" ? content : "Review this concept before continuing."}
+        </p>
+      )}
+    </div>
   );
 }

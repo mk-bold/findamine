@@ -78,6 +78,18 @@ export function requireRole(
   }
 }
 
+/**
+ * Sanitize user input for use in PostgREST filter strings (.ilike, .or).
+ * Escapes characters that have special meaning in PostgREST filter syntax.
+ */
+export function sanitizeFilterInput(input: string): string {
+  // Remove PostgREST operators and special chars that could manipulate filters
+  return input
+    .replace(/[\\%_(),.]/g, "\\$&") // escape SQL LIKE wildcards and PostgREST delimiters
+    .replace(/[^\w\s\-'"]/g, "")    // strip anything else that isn't word chars, spaces, hyphens, quotes
+    .slice(0, 200);                  // cap length to prevent abuse
+}
+
 export class ApiError extends Error {
   constructor(
     public statusCode: number,

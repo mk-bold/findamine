@@ -5,6 +5,7 @@ import {
   requireRole,
   errorResponse,
   ApiError,
+  sanitizeFilterInput,
 } from "@/lib/utils/api-auth";
 
 export async function GET(request: NextRequest) {
@@ -65,10 +66,12 @@ export async function GET(request: NextRequest) {
       query = query.eq("is_template", true);
     }
     if (q) {
-      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      const safeQ = sanitizeFilterInput(q);
+      query = query.or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`);
     }
     if (audience) {
-      query = query.or(`target_audience.eq.${audience},target_audience.eq.all`);
+      const safeAudience = sanitizeFilterInput(audience);
+      query = query.or(`target_audience.eq.${safeAudience},target_audience.eq.all`);
     }
 
     const { data, error } = await query;
@@ -105,6 +108,7 @@ export async function POST(request: NextRequest) {
         max_teams: body.max_teams || null,
         min_team_size: body.min_team_size || 1,
         max_team_size: body.max_team_size || 6,
+        identity_mode: body.identity_mode || "codename_assigned",
         is_template: body.is_template || false,
         metadata: body.metadata || {},
         created_by: user.id,

@@ -1,6 +1,46 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+
+// Roles whose names are never shown publicly on leaderboards
+const PROTECTED_ROLES = ["child", "teen"];
+
+interface LeaderboardUser {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: string;
+}
+
+/**
+ * Redact display info for protected users based on the hunt's identity_mode.
+ * - codename_assigned / codename_chosen: always show codename
+ * - real_name: show real name for adults, initials for children/teens
+ */
+function redactEntry(
+  user: LeaderboardUser | null,
+  codename: string | null,
+  identityMode: string
+) {
+  if (!user) return { display_name: "Anonymous", avatar_url: null };
+
+  // If hunt uses codenames, always show the codename
+  if (identityMode !== "real_name" && codename) {
+    return { display_name: codename, avatar_url: null };
+  }
+
+  // real_name mode: protect children/teens with initials
+  if (PROTECTED_ROLES.includes(user.role)) {
+    const initials = (user.display_name || "?")
+      .split(" ")
+      .map((w: string) => w[0])
+      .join("")
+      .toUpperCase();
+    return { display_name: initials || "?", avatar_url: null };
+  }
+
+  return { display_name: user.display_name, avatar_url: user.avatar_url };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,29 +52,103 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createSupabaseServiceClient();
 
+    // Check if the requesting user is a teacher/admin for this hunt
+    // (teachers can see real names for their own hunts)
+    const currentUser = await getAuthUser(request);
+    let isHuntOwner = false;
+
     if (huntId) {
-      // Hunt-specific leaderboard
+      // Get hunt's identity_mode
+      const { data: hunt } = await supabase
+        .from("hunts")
+        .select("identity_mode, created_by")
+        .eq("id", huntId)
+        .single();
+
+      const identityMode = hunt?.identity_mode || "codename_assigned";
+
+      if (
+        currentUser &&
+        hunt &&
+        (hunt.created_by === currentUser.id ||
+          ["admin", "researcher"].includes(currentUser.role))
+      ) {
+        isHuntOwner = true;
+      }
+
+      // Hunt-specific: join play_sessions for codenames
       const { data } = await supabase
-        .from("leaderboard_entries")
-        .select("*, users(id, display_name, avatar_url), teams(id, name)")
+        .from("play_sessions")
+        .select(
+          "user_id, total_score, codename, users(id, display_name, avatar_url, role)"
+        )
         .eq("hunt_id", huntId)
-        .eq("entry_type", entryType)
-        .eq("period", period)
-        .order("score", { ascending: false })
+        .eq("status", "completed")
+        .order("total_score", { ascending: false })
         .limit(limit);
 
-      return Response.json({ entries: data || [] });
+      const entries = (data || []).map(
+        (row: {
+          user_id: string;
+          total_score: number;
+          codename: string | null;
+          users: LeaderboardUser;
+        }) => {
+          const identity = isHuntOwner
+            ? {
+                display_name: row.users?.display_name,
+                avatar_url: row.users?.avatar_url,
+                codename: row.codename,
+              }
+            : redactEntry(row.users, row.codename, identityMode);
+
+          return {
+            user_id: row.user_id,
+            score: row.total_score,
+            ...identity,
+          };
+        }
+      );
+
+      return Response.json({ entries, identity_mode: identityMode });
     }
 
-    // Overall leaderboard (aggregate from play sessions)
-    const { data } = await supabase
-      .from("play_sessions")
-      .select("user_id, total_score, users(id, display_name, avatar_url)")
-      .eq("status", "completed")
-      .order("total_score", { ascending: false })
-      .limit(limit);
+    // Overall leaderboard: aggregated per user via RPC, always protect children
+    const { data } = await supabase.rpc("overall_leaderboard", {
+      p_limit: limit,
+    });
 
-    return Response.json({ entries: data || [] });
+    const entries = (data || []).map(
+      (row: {
+        user_id: string;
+        total_score: number;
+        hunts_completed: number;
+        display_name: string | null;
+        avatar_url: string | null;
+        role: string;
+        best_codename: string | null;
+      }) => {
+        const user: LeaderboardUser = {
+          id: row.user_id,
+          display_name: row.display_name,
+          avatar_url: row.avatar_url,
+          role: row.role,
+        };
+        const identity = redactEntry(
+          user,
+          row.best_codename,
+          "codename_assigned"
+        );
+        return {
+          user_id: row.user_id,
+          score: row.total_score,
+          hunts_completed: row.hunts_completed,
+          ...identity,
+        };
+      }
+    );
+
+    return Response.json({ entries, identity_mode: "codename_assigned" });
   } catch (error) {
     return errorResponse(error);
   }

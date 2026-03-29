@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import NotificationBell from "./notification-bell";
 
 interface NavbarProps {
   user: { id: string; display_name: string | null; role: string; avatar_url: string | null } | null;
@@ -13,6 +14,7 @@ interface NavbarProps {
 export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function handleLogout() {
     const supabase = createSupabaseBrowserClient();
@@ -41,6 +43,7 @@ export default function Navbar({ user }: NavbarProps) {
           <Image src="/logo-findamine.png" alt="findamine" width={120} height={30} className="h-7 w-auto" />
         </Link>
 
+        {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
@@ -60,12 +63,13 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
+              <NotificationBell />
+              <Link href="/settings" className="hidden sm:inline text-sm text-gray-600 hover:text-gray-900">
                 {user.display_name || "Profile"}
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="hidden sm:inline text-sm text-gray-500 hover:text-gray-700"
               >
                 Sign out
               </button>
@@ -83,8 +87,61 @@ export default function Navbar({ user }: NavbarProps) {
               </Link>
             </>
           )}
+
+          {/* Mobile hamburger — only when logged in */}
+          {user && (
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="sm:hidden p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {menuOpen && user && (
+        <nav className="sm:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className={`block rounded-md px-3 py-2 text-sm ${
+                pathname.startsWith(link.href)
+                  ? "bg-sky-50 text-sky-700 font-medium"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <hr className="my-2 border-gray-100" />
+          <Link
+            href="/settings"
+            onClick={() => setMenuOpen(false)}
+            className="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            {user.display_name || "Profile"}
+          </Link>
+          <button
+            onClick={() => { setMenuOpen(false); handleLogout(); }}
+            className="block w-full text-left rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-50"
+          >
+            Sign out
+          </button>
+        </nav>
+      )}
     </header>
   );
 }

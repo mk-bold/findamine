@@ -1,6 +1,7 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Leaderboard from "@/components/social/leaderboard";
 
 export default async function HuntDetailPage({
   params,
@@ -82,10 +83,15 @@ export default async function HuntDetailPage({
 
       <Link
         href={`/play/${hunt.id}`}
-        className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700"
+        className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700 mb-8"
       >
         Start Hunt
       </Link>
+
+      {/* Live leaderboard for this hunt */}
+      <div className="mt-8">
+        <Leaderboard huntId={hunt.id} />
+      </div>
     </main>
   );
 }
