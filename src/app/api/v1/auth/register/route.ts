@@ -15,14 +15,34 @@ export async function POST(request: NextRequest) {
 
     // Only allow self-registration for these roles.
     // Admin and researcher accounts must be created via the admin panel.
+    // Child accounts MUST be created by a parent/teacher via register-child (COPPA).
     const selfRegisterRoles = [
-      "child",
       "teen",
       "parent",
       "teacher",
       "game_master",
     ];
-    const userRole = selfRegisterRoles.includes(role) ? role : "parent";
+    let userRole = selfRegisterRoles.includes(role) ? role : "parent";
+
+    // If registering as teen, require DOB and verify age >= 13
+    if (userRole === "teen") {
+      if (!date_of_birth) {
+        throw new ApiError(400, "Date of birth is required for teen accounts");
+      }
+      const age = Math.floor(
+        (Date.now() - new Date(date_of_birth).getTime()) /
+          (365.25 * 24 * 60 * 60 * 1000)
+      );
+      if (age < 13) {
+        throw new ApiError(
+          403,
+          "You must be 13 or older to create your own account. Ask a parent or teacher to create an account for you."
+        );
+      }
+      if (age >= 18) {
+        userRole = "parent"; // Adults default to parent role
+      }
+    }
 
     const supabase = await createSupabaseServiceClient();
 

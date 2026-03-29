@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("parent");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ export default function RegisterPage() {
         password,
         display_name: displayName,
         role,
+        date_of_birth: role === "teen" ? dateOfBirth : undefined,
       }),
     });
 
@@ -136,9 +138,34 @@ export default function RegisterPage() {
             </select>
           </div>
 
+          {role === "teen" && (
+            <div>
+              <label htmlFor="dob" className="block text-sm font-medium text-gray-700">
+                Date of birth
+              </label>
+              <input
+                id="dob"
+                type="date"
+                required
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                You must be 13 or older to create your own account.
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
+            <strong>Under 13?</strong> A parent or teacher needs to create your account.
+            Ask them to sign up and add you from their dashboard.
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (role === "teen" && !dateOfBirth)}
             className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
           >
             {loading ? "Creating account..." : "Create account"}

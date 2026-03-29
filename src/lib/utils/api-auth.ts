@@ -90,6 +90,24 @@ export function sanitizeFilterInput(input: string): string {
     .slice(0, 200);                  // cap length to prevent abuse
 }
 
+/**
+ * Block children from accessing a feature unless their privacy settings allow it.
+ * Throws 403 if the user is a child. Use on social endpoints (friends, wall, kudos, etc.).
+ */
+export function blockChildren(
+  user: AuthUser | null,
+  feature?: string
+): void {
+  if (user && user.role === "child") {
+    throw new ApiError(
+      403,
+      feature
+        ? `This feature (${feature}) is not available for child accounts.`
+        : "This feature is not available for child accounts."
+    );
+  }
+}
+
 export class ApiError extends Error {
   constructor(
     public statusCode: number,

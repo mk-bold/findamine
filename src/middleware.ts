@@ -1,6 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Pages that pending_consent users CAN access
+const CONSENT_ALLOWED_PATHS = [
+  "/consent-pending",
+  "/api/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -26,7 +36,29 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refresh the session
-  await supabase.auth.getUser();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+
+  // COPPA consent gate: block pending_consent users from app pages
+  if (authUser) {
+    const pathname = request.nextUrl.pathname;
+    const isAllowed = CONSENT_ALLOWED_PATHS.some((p) => pathname.startsWith(p));
+
+    if (!isAllowed) {
+      // Check user status — use a lightweight query via the anon key
+      // (RLS will scope to the authenticated user's data)
+      const { data: profile } = await supabase
+        .from("users")
+        .select("status")
+        .eq("auth_id", authUser.id)
+        .single();
+
+      if (profile?.status === "pending_consent") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/consent-pending";
+        return NextResponse.redirect(url);
+      }
+    }
+  }
 
   return supabaseResponse;
 }

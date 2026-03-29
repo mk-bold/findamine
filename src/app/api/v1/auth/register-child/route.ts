@@ -6,6 +6,7 @@ import {
   errorResponse,
   ApiError,
 } from "@/lib/utils/api-auth";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +47,9 @@ export async function POST(request: NextRequest) {
       throw new ApiError(400, authError.message);
     }
 
+    // Create app user row — children start as pending_consent (COPPA)
+    const childStatus = role === "child" ? "pending_consent" : "active";
+
     const { data: child, error: userError } = await supabase
       .from("users")
       .insert({
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
         email: childEmail,
         display_name,
         role,
+        status: childStatus,
         date_of_birth: date_of_birth || null,
         parent_id: user.id,
       })
@@ -64,13 +69,52 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, "Failed to create child profile");
     }
 
+    // Create parent_child_links row
+    await supabase.from("parent_child_links").insert({
+      parent_id: user.id,
+      child_id: child.id,
+      relationship_type: user.role === "teacher" ? "teacher" : "parent",
+      verified: false,
+    });
+
+    // For children (under 13): create consent record with verification token
+    let verificationToken: string | null = null;
+
+    if (role === "child") {
+      verificationToken = crypto.randomBytes(32).toString("hex");
+
+      await supabase.from("consent_records").insert({
+        user_id: user.id, // The parent granting consent
+        child_id: child.id,
+        consent_type: "parental",
+        form_version: "1.0",
+        granted: false, // Not yet verified
+        verification_token: verificationToken,
+        ip_address: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+        metadata: {
+          child_name: display_name,
+          child_role: role,
+          parent_role: user.role,
+        },
+      });
+
+      // TODO: Send verification email to parent with link:
+      // ${siteUrl}/api/v1/consent/coppa/verify?token=${verificationToken}&child_id=${child.id}
+    }
+
     return Response.json(
       {
         child: {
           id: child.id,
           display_name: child.display_name,
           role: child.role,
+          status: childStatus,
         },
+        requires_consent: role === "child",
+        verification_token: verificationToken, // Returned so parent can verify immediately
+        message: role === "child"
+          ? "Child account created. Parental consent verification is required before the child can use the app."
+          : "Teen account created and ready to use.",
       },
       { status: 201 }
     );

@@ -7,7 +7,7 @@ export type UserRole =
   | "admin"
   | "researcher";
 
-export type UserStatus = "active" | "inactive" | "suspended" | "banned";
+export type UserStatus = "active" | "inactive" | "suspended" | "banned" | "pending_consent";
 
 export type HuntStatus =
   | "draft"

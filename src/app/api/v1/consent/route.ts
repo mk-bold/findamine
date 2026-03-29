@@ -42,6 +42,18 @@ export async function POST(request: NextRequest) {
 
     // Record consent
     if (body.consent_type) {
+      // COPPA: only parents/teachers/admins can create parental consent records
+      if (body.consent_type === "parental") {
+        if (!["parent", "teacher", "admin"].includes(user.role)) {
+          throw new ApiError(403, "Only parents, teachers, or admins can grant parental consent");
+        }
+      }
+
+      // Children cannot create any consent records for themselves
+      if (["child"].includes(user.role) && body.consent_type !== "terms") {
+        throw new ApiError(403, "Consent must be granted by a parent or teacher");
+      }
+
       const { data, error } = await supabase
         .from("consent_records")
         .insert({

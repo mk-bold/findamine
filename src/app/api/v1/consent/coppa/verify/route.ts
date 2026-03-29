@@ -18,42 +18,64 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createSupabaseServiceClient();
 
-    // Verify consent record exists with matching token
+    // Find consent record scoped to THIS child with matching token
     const { data: consent } = await supabase
       .from("consent_records")
-      .select("id, user_id, metadata")
+      .select("id, user_id, granted, verified_at")
       .eq("consent_type", "parental")
+      .eq("child_id", childId)
+      .eq("verification_token", token)
       .is("revoked_at", null)
       .maybeSingle();
 
     if (!consent) {
-      throw new ApiError(404, "Consent record not found");
+      throw new ApiError(404, "Consent record not found or invalid token");
     }
 
-    const metadata = consent.metadata as Record<string, unknown>;
-    if (metadata?.verification_token !== token) {
-      throw new ApiError(400, "Invalid verification token");
+    // Prevent re-verification
+    if (consent.verified_at) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://findamine.app";
+      return Response.redirect(`${siteUrl}/consent-verified?already=true`);
     }
 
-    // Mark consent as verified
+    // Mark consent as granted and verified
     await supabase
       .from("consent_records")
       .update({
-        metadata: { ...metadata, verified: true, verified_at: new Date().toISOString() },
+        granted: true,
+        verified_at: new Date().toISOString(),
       })
       .eq("id", consent.id);
 
     // Verify the parent-child link
     await supabase
       .from("parent_child_links")
-      .update({ verified: true, verified_at: new Date().toISOString() })
+      .update({ verified: true })
+      .eq("parent_id", consent.user_id)
       .eq("child_id", childId);
 
     // Activate the child's account
     await supabase
       .from("users")
       .update({ status: "active" })
-      .eq("id", childId);
+      .eq("id", childId)
+      .eq("status", "pending_consent"); // Only activate if still pending
+
+    // Create restrictive default privacy settings for the child
+    await supabase.from("privacy_settings").upsert(
+      {
+        user_id: childId,
+        granularity_tier: "simple",
+        settings: {
+          share_display_name: false,
+          share_avatar: false,
+          allow_friend_requests: false,
+          allow_team_chat: true, // Within assigned teams only
+          share_location_data: false,
+        },
+      },
+      { onConflict: "user_id" }
+    );
 
     // Redirect to success page
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://findamine.app";

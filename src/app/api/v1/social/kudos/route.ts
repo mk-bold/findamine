@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { getAuthUser, blockChildren, errorResponse, ApiError } from "@/lib/utils/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
+    blockChildren(user, "kudos");
 
     const body = await request.json();
     if (!body.receiver_id || !body.message) {
