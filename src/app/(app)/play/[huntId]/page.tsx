@@ -367,7 +367,7 @@ export default function PlayPage() {
           onComplete={() => setShowCelebration(false)}
         />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+        <div className="card-themed p-8 text-center">
           <div className="text-5xl mb-4">🏆</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hunt Complete!</h1>
           <p className="text-gray-500 mb-8">You finished all {finds.length} stops</p>
@@ -375,7 +375,7 @@ export default function PlayPage() {
           {huntSummary && (
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="rounded-lg bg-sky-50 p-4">
-                <div className="text-3xl font-bold text-sky-600">{huntSummary.totalScore}</div>
+                <div className="text-3xl font-bold text-themed-primary">{huntSummary.totalScore}</div>
                 <div className="text-xs text-gray-500 mt-1">Total Points</div>
               </div>
               <div className="rounded-lg bg-green-50 p-4">
@@ -396,7 +396,7 @@ export default function PlayPage() {
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => router.push("/dashboard")}
-              className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700"
+              className="btn-primary px-6 py-2 text-sm font-medium"
             >
               Back to Dashboard
             </button>
@@ -442,14 +442,14 @@ export default function PlayPage() {
       </div>
       <div className="h-2 rounded-full bg-gray-200 mb-4">
         <div
-          className="h-2 rounded-full bg-sky-500 transition-all"
+          className="h-2 rounded-full progress-fill"
           style={{ width: `${(totalCompleted / finds.length) * 100}%` }}
         />
       </div>
 
       <StopFlowStepper currentStep={step} />
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 mb-6 min-h-[300px]">
+      <div className="card-themed mb-6 min-h-[300px]">
         {/* ── PRIME ── */}
         {step === "prime" && currentFind?.primers && (
           <div>
@@ -460,7 +460,7 @@ export default function PlayPage() {
               </h3>
               <PrimerContent content={(currentFind.primers as { content: Record<string, unknown> }).content} />
             </div>
-            <button onClick={handlePrimeViewed} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
+            <button onClick={handlePrimeViewed} className="w-full btn-primary px-4 py-2 text-sm font-medium">
               I&apos;m Ready!
             </button>
           </div>
@@ -480,7 +480,7 @@ export default function PlayPage() {
                 Heading to: {(currentFind.locations as { name: string }).name}
               </p>
             )}
-            <button onClick={handleClueRead} className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
+            <button onClick={handleClueRead} className="w-full btn-primary px-4 py-2 text-sm font-medium">
               Start Navigating
             </button>
           </div>
@@ -703,7 +703,7 @@ export default function PlayPage() {
 
             {score !== null && (
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-sky-600">{score}</div>
+                <div className="text-4xl font-bold text-themed-primary">{score}</div>
                 <p className="text-sm text-gray-500">points earned</p>
               </div>
             )}
@@ -761,14 +761,14 @@ export default function PlayPage() {
           isLastFind ? (
             <button
               onClick={handleFinishHunt}
-              className="rounded-md bg-sky-700 px-6 py-2 text-sm font-medium text-white hover:bg-sky-800"
+              className="btn-primary px-6 py-2 text-sm font-medium"
             >
               Finish Hunt
             </button>
           ) : (
             <button
               onClick={handleNextFind}
-              className="rounded-md bg-sky-600 px-6 py-2 text-sm font-medium text-white hover:bg-sky-700"
+              className="btn-primary px-6 py-2 text-sm font-medium"
             >
               Next Stop
             </button>

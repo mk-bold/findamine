@@ -88,11 +88,12 @@ function DashboardCard({
   return (
     <Link
       href={href}
-      className="block rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md hover:border-sky-200 transition-all"
+      className="block card-themed shadow-sm hover:shadow-md transition-all"
+      style={{ borderColor: "var(--color-border)" }}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-gray-900">{title}</h3>
-        <span className="text-lg font-bold text-sky-600">{count}</span>
+        <h3 className="font-semibold text-sm text-themed">{title}</h3>
+        <span className="text-lg font-bold text-themed-primary">{count}</span>
       </div>
       <p className="mt-0.5 text-xs text-gray-500">{description}</p>
     </Link>

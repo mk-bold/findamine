@@ -25,20 +25,37 @@ export default function StopFlowStepper({ currentStep }: StopFlowStepperProps) {
         return (
           <div key={step.key} className="flex flex-col items-center flex-1">
             <div
-              className={`flex items-center justify-center w-10 h-10 rounded-full text-lg transition-all ${
-                isActive
-                  ? "bg-sky-100 ring-2 ring-sky-500 scale-110"
+              className={`flex items-center justify-center rounded-full text-lg transition-all`}
+              style={{
+                width: "var(--touch-target, 40px)",
+                height: "var(--touch-target, 40px)",
+                ...(isActive
+                  ? {
+                      backgroundColor: "var(--color-primary-light, #BAE6FD)",
+                      boxShadow: "0 0 0 2px var(--color-primary, #0EA5E9)",
+                      transform: "scale(1.1)",
+                    }
                   : isCompleted
-                  ? "bg-sky-500 text-white"
-                  : "bg-gray-100 text-gray-400"
-              }`}
+                  ? {
+                      backgroundColor: "var(--color-primary, #0EA5E9)",
+                      color: "white",
+                    }
+                  : {
+                      backgroundColor: "#F3F4F6",
+                      color: "#9CA3AF",
+                    }),
+              }}
             >
               {isCompleted ? "✓" : step.icon}
             </div>
             <span
-              className={`text-xs mt-1 ${
-                isActive ? "text-sky-700 font-medium" : "text-gray-400"
-              }`}
+              className="text-xs mt-1"
+              style={{
+                color: isActive
+                  ? "var(--color-primary-dark, #0284C7)"
+                  : "#9CA3AF",
+                fontWeight: isActive ? "var(--font-weight, 500)" : "400",
+              }}
             >
               {step.label}
             </span>

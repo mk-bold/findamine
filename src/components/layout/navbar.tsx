@@ -51,7 +51,7 @@ export default function Navbar({ user }: NavbarProps) {
               href={link.href}
               className={`text-sm ${
                 pathname.startsWith(link.href)
-                  ? "text-sky-700 font-medium"
+                  ? "text-themed-primary font-medium"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -119,7 +119,7 @@ export default function Navbar({ user }: NavbarProps) {
               onClick={() => setMenuOpen(false)}
               className={`block rounded-md px-3 py-2 text-sm ${
                 pathname.startsWith(link.href)
-                  ? "bg-sky-50 text-sky-700 font-medium"
+                  ? "text-themed-primary font-medium"
                   : "text-gray-700 hover:bg-gray-50"
               }`}
             >
