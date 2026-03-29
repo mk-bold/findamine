@@ -1,18 +1,33 @@
 import Link from "next/link";
 import Image from "next/image";
+import { headers } from "next/headers";
 import { MapPin, Users, Trophy, Compass, BookOpen, Shield } from "lucide-react";
+import { selectHeroBanner, getHeroBannerContext } from "@/lib/services/hero-banner";
 
-export default function Home() {
+export default async function Home() {
+  const headersList = await headers();
+  const geoCtx = getHeroBannerContext(headersList);
+  const hero = selectHeroBanner(geoCtx);
+
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero */}
+      {/* Hero with dynamic banner */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-emerald-50 to-amber-50" />
-        <div className="absolute top-10 left-10 w-48 h-48 bg-sky-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute bottom-10 right-10 w-56 h-56 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }} />
+        {/* Dynamic background image */}
+        <div className="absolute inset-0">
+          <Image
+            src={hero.src}
+            alt={hero.alt}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white/90" />
+        </div>
 
         <div className="relative mx-auto max-w-4xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur px-3 py-1 text-xs text-sky-700 shadow-sm mb-6 border border-sky-100">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1 text-xs text-sky-700 shadow-sm mb-6 border border-sky-100">
             <Compass className="w-3.5 h-3.5" />
             GPS-Powered Learning Adventures
           </div>
@@ -24,11 +39,12 @@ export default function Home() {
               width={280}
               height={70}
               priority
-              className="h-auto"
+              className="h-auto max-w-[280px]"
+              style={{ objectFit: "contain" }}
             />
           </div>
 
-          <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-4 text-lg sm:text-xl text-gray-700 max-w-xl mx-auto leading-relaxed">
             Turn any outdoor space into an interactive classroom. Create GPS scavenger hunts that make learning an adventure.
           </p>
 
