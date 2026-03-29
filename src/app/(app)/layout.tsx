@@ -1,11 +1,15 @@
 import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/navbar";
+import { AgeBandProvider } from "@/lib/themes/age-band-provider";
+import type { AgeBand } from "@/lib/themes/tokens";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
 
   let profile = null;
+  let ageBand: AgeBand = "intermediate";
+
   if (authUser) {
     const serviceClient = await createSupabaseServiceClient();
     const { data } = await serviceClient
@@ -15,12 +19,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .is("deleted_at", null)
       .single();
     profile = data;
+
+    // Get age band
+    if (profile) {
+      const { data: userProfile } = await serviceClient
+        .from("user_profiles")
+        .select("effective_band")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+      if (userProfile?.effective_band) {
+        ageBand = userProfile.effective_band as AgeBand;
+      }
+    }
   }
 
   return (
-    <>
+    <AgeBandProvider initialBand={ageBand}>
       <Navbar user={profile} />
       {children}
-    </>
+    </AgeBandProvider>
   );
 }
