@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -36,8 +37,8 @@ export default function Navbar({ user }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-14">
-        <Link href={user ? "/dashboard" : "/"} className="text-lg font-bold text-emerald-700">
-          Findamine
+        <Link href={user ? "/dashboard" : "/"}>
+          <Image src="/logo-findamine.png" alt="findamine" width={120} height={30} className="h-7 w-auto" />
         </Link>
 
         <nav className="hidden sm:flex items-center gap-6">

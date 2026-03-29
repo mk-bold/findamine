@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Users, Trophy, Compass, BookOpen, Shield } from "lucide-react";
 
 export default function Home() {
@@ -16,11 +17,16 @@ export default function Home() {
             GPS-Powered Learning Adventures
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-r from-sky-600 via-emerald-500 to-amber-500 bg-clip-text text-transparent">
-              findamine
-            </span>
-          </h1>
+          <div className="flex justify-center mb-2">
+            <Image
+              src="/logo-findamine.png"
+              alt="findamine"
+              width={280}
+              height={70}
+              priority
+              className="h-auto"
+            />
+          </div>
 
           <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
             Turn any outdoor space into an interactive classroom. Create GPS scavenger hunts that make learning an adventure.
