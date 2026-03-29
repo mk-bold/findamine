@@ -88,23 +88,26 @@ export async function GET(request: NextRequest) {
         .limit(limit);
 
       const entries = (data || []).map(
-        (row: {
-          user_id: string;
-          total_score: number;
-          codename: string | null;
-          users: LeaderboardUser;
-        }) => {
+        (row: Record<string, unknown>) => {
+          // Supabase returns joined users as array or object depending on relation type
+          const rawUsers = row.users;
+          const user: LeaderboardUser | null = Array.isArray(rawUsers)
+            ? (rawUsers[0] as LeaderboardUser) ?? null
+            : (rawUsers as LeaderboardUser) ?? null;
+
+          const codename = row.codename as string | null;
+
           const identity = isHuntOwner
             ? {
-                display_name: row.users?.display_name,
-                avatar_url: row.users?.avatar_url,
-                codename: row.codename,
+                display_name: user?.display_name ?? null,
+                avatar_url: user?.avatar_url ?? null,
+                codename,
               }
-            : redactEntry(row.users, row.codename, identityMode);
+            : redactEntry(user, codename, identityMode);
 
           return {
-            user_id: row.user_id,
-            score: row.total_score,
+            user_id: row.user_id as string,
+            score: row.total_score as number,
             ...identity,
           };
         }
