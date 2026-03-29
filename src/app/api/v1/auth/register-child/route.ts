@@ -7,6 +7,7 @@ import {
   ApiError,
 } from "@/lib/utils/api-auth";
 import crypto from "crypto";
+import { sendConsentVerificationEmail } from "@/lib/services/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,8 +99,23 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // TODO: Send verification email to parent with link:
-      // ${siteUrl}/api/v1/consent/coppa/verify?token=${verificationToken}&child_id=${child.id}
+      // Send verification email to parent
+      // Get parent's email for the consent email
+      const { data: parentProfile } = await supabase
+        .from("users")
+        .select("email, display_name")
+        .eq("id", user.id)
+        .single();
+
+      if (parentProfile?.email) {
+        await sendConsentVerificationEmail({
+          parentEmail: parentProfile.email,
+          parentName: parentProfile.display_name,
+          childName: display_name,
+          childId: child.id,
+          verificationToken,
+        });
+      }
     }
 
     return Response.json(
