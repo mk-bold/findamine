@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { password } = body;
 
-    if (!password || password.length < 6) {
-      throw new ApiError(400, "Password must be at least 6 characters");
+    if (!password || password.length < 8) {
+      throw new ApiError(400, "Password must be at least 8 characters");
     }
 
     const { cookies } = await import("next/headers");

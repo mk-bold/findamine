@@ -5,7 +5,7 @@ import { authLimiter } from "@/lib/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
-    authLimiter.check(request);
+    await authLimiter.check(request);
     const body = await request.json();
     const { email } = body;
 

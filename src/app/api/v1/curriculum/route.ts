@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 /**
  * Browse the curriculum library.
@@ -8,6 +9,7 @@ import { errorResponse, ApiError } from "@/lib/utils/api-auth";
  */
 export async function GET(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const { searchParams } = new URL(request.url);
     const subject = searchParams.get("subject");
     const gradeMin = searchParams.get("grade_min");

@@ -7,7 +7,7 @@ import type { AgeBand } from "@/lib/themes/tokens";
 
 export async function POST(request: NextRequest) {
   try {
-    aiLimiter.check(request);
+    await aiLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 

@@ -2,11 +2,13 @@ import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { calculateScore, getGrowthMindsetMessage } from "@/lib/services/scoring";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ huntId: string }> }
 ) {
+  const start = performance.now();
   try {
     const { huntId } = await params;
     const user = await getAuthUser(request);
@@ -181,6 +183,8 @@ export async function POST(
         .eq("id", session.id);
     }
 
+    logger.info("play.answer", { userId: user.id, huntId, findId: find_id, score: scoringResult.totalScore, correct: isCorrect, attempt: attemptCount, durationMs: Math.round(performance.now() - start) });
+
     return Response.json({
       score: scoringResult.totalScore,
       breakdown: scoringResult.breakdown,
@@ -195,6 +199,7 @@ export async function POST(
       is_complete: isNowComplete,
     });
   } catch (error) {
+    logger.error("play.answer.error", { durationMs: Math.round(performance.now() - start), error: error instanceof Error ? error.message : String(error) });
     return errorResponse(error);
   }
 }

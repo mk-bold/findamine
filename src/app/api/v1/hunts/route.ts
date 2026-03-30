@@ -7,9 +7,11 @@ import {
   ApiError,
   sanitizeFilterInput,
 } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const { searchParams } = new URL(request.url);
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");

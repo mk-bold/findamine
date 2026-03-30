@@ -11,7 +11,21 @@ const CONSENT_ALLOWED_PATHS = [
   "/reset-password",
 ];
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-type",
+  "Access-Control-Max-Age": "86400",
+};
+
 export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // CORS preflight for API routes
+  if (pathname.startsWith("/api/") && request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -57,6 +71,13 @@ export default async function proxy(request: NextRequest) {
         url.pathname = "/consent-pending";
         return NextResponse.redirect(url);
       }
+    }
+  }
+
+  // Append CORS headers to API responses
+  if (pathname.startsWith("/api/")) {
+    for (const [key, value] of Object.entries(CORS_HEADERS)) {
+      supabaseResponse.headers.set(key, value);
     }
   }
 

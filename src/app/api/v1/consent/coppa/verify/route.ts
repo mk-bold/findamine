@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { authLimiter } from "@/lib/utils/rate-limit";
 
 /**
  * Verify parental consent via email link.
@@ -8,6 +9,7 @@ import { errorResponse, ApiError } from "@/lib/utils/api-auth";
  */
 export async function GET(request: NextRequest) {
   try {
+    await authLimiter.check(request);
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
     const childId = searchParams.get("child_id");

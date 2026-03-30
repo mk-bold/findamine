@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { errorResponse, ApiError, sanitizeFilterInput } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q");
     if (!q || q.length < 2) throw new ApiError(400, "Query must be at least 2 characters");

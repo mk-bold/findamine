@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 // Roles whose names are never shown publicly on leaderboards
 const PROTECTED_ROLES = ["child", "teen"];
@@ -44,6 +45,7 @@ function redactEntry(
 
 export async function GET(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const { searchParams } = new URL(request.url);
     const huntId = searchParams.get("hunt_id");
     const entryType = searchParams.get("type") || "user";
