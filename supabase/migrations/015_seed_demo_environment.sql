@@ -4,10 +4,10 @@
 -- All on BYU campus / Provo, UT with real GPS coordinates
 -- ══════════════════════════════════════════════════════════════
 
--- NOTE: Auth users (supabase.auth.users) must be created via the
--- Supabase dashboard or auth API. This migration creates app-level
--- user records with placeholder auth_ids. After creating auth users,
--- update the auth_id column to match.
+-- Temporarily drop the auth_id FK so we can insert seed users
+-- without creating Supabase Auth entries for each one.
+-- The FK will be re-added at the end of this migration.
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_auth_id_fkey;
 
 -- ── 1. USERS (23) ────────────────────────────────────────────
 
@@ -494,3 +494,11 @@ BEGIN
   ON CONFLICT (user_id) DO NOTHING;
 
 END $$;
+
+-- Re-add the auth_id FK constraint.
+-- Using NOT VALID so it doesn't check existing rows (seed users have no auth.users entry).
+-- Real users created via the register API will satisfy the constraint.
+ALTER TABLE public.users
+  ADD CONSTRAINT users_auth_id_fkey
+  FOREIGN KEY (auth_id) REFERENCES auth.users(id) ON DELETE CASCADE
+  NOT VALID;
