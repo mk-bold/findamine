@@ -10,6 +10,18 @@
  * 6. Default fallback
  */
 
+// ── Scene Image Base URL ─────────────────────────────
+// After running scripts/upload-scene-images.mjs, set this env var
+// to the Supabase Storage public URL for the hero-scenes bucket.
+// Example: https://xxxx.supabase.co/storage/v1/object/public/hero-scenes/
+const SCENE_BASE = process.env.NEXT_PUBLIC_SCENE_IMAGE_BASE || "";
+
+function scene(filename: string): string {
+  if (SCENE_BASE) return `${SCENE_BASE}${filename}`;
+  // Fallback to hero-public.png if scene images aren't uploaded yet
+  return "/hero-public.png";
+}
+
 // ── Types ────────────────────────────────────────────
 
 interface HeroBannerContext {
@@ -66,37 +78,35 @@ const HOLIDAYS: HolidayRule[] = [
   {
     name: "Winter break",
     match: (d) => (d.getMonth() === 11 && d.getDate() >= 21) || (d.getMonth() === 0 && d.getDate() <= 3),
-    banner: { src: "/hero-public.png", alt: "Winter adventure landscape", category: "holiday" },
-    // Will use scene-adventure-winter when available on CDN
+    banner: { src: scene("scene-adventure-winter.png"), alt: "Winter adventure landscape", category: "holiday" },
   },
   {
     name: "Halloween season",
     match: (d) => d.getMonth() === 9 && d.getDate() >= 15,
-    banner: { src: "/hero-public.png", alt: "Night exploration adventure", category: "holiday" },
-    // Will use scene-adventure-night when available on CDN
+    banner: { src: scene("scene-adventure-night.png"), alt: "Night exploration adventure", category: "holiday" },
   },
   {
     name: "Earth Day",
     match: (d) => d.getMonth() === 3 && d.getDate() >= 20 && d.getDate() <= 24,
-    banner: { src: "/hero-public.png", alt: "Tropical rainforest exploration", category: "holiday" },
+    banner: { src: scene("scene-tropical-rainforest.png"), alt: "Tropical rainforest exploration", category: "holiday" },
   },
 ];
 
 // ── Time of day ──────────────────────────────────────
 
 function getTimeOfDayBanner(hour: number): HeroBannerResult | null {
-  // These will be served from CDN when scene images are uploaded
-  // For now, return null to fall through to season/location
+  if (!SCENE_BASE) return null; // No scene images uploaded yet
+
   if (hour >= 5 && hour < 8) {
-    return null; // sunrise — scene-adventure-sunrise
+    return { src: scene("scene-adventure-sunrise.png"), alt: "Sunrise exploration adventure", category: "time" };
   }
   if (hour >= 17 && hour < 20) {
-    return null; // sunset — scene-adventure-sunset
+    return { src: scene("scene-adventure-sunset.png"), alt: "Sunset exploration adventure", category: "time" };
   }
   if (hour >= 20 || hour < 5) {
-    return null; // night — scene-adventure-night
+    return { src: scene("scene-adventure-night.png"), alt: "Night exploration adventure", category: "time" };
   }
-  return null; // daytime — fall through
+  return null; // daytime — fall through to region/season
 }
 
 // ── Geographic region → biome ────────────────────────
@@ -111,44 +121,64 @@ const REGION_RULES: RegionRule[] = [
   // US regions
   {
     usStates: ["AZ", "NM", "UT", "NV"],
-    banner: { src: "/hero-public.png", alt: "Canyon desert exploration", category: "biome" },
+    banner: { src: scene("scene-grand-canyon.png"), alt: "Canyon desert exploration", category: "biome" },
   },
   {
     usStates: ["OR", "WA"],
-    banner: { src: "/hero-public.png", alt: "Pacific Northwest forest adventure", category: "biome" },
+    banner: { src: scene("scene-pacific-northwest-forest.png"), alt: "Pacific Northwest forest adventure", category: "biome" },
   },
   {
     usStates: ["CO", "MT", "WY", "ID"],
-    banner: { src: "/hero-public.png", alt: "Alpine mountain exploration", category: "biome" },
+    banner: { src: scene("scene-alpine-meadow.png"), alt: "Alpine mountain exploration", category: "biome" },
   },
   {
     usStates: ["HI"],
-    banner: { src: "/hero-public.png", alt: "Tropical island adventure", category: "biome" },
+    banner: { src: scene("scene-tropical-island.png"), alt: "Tropical island adventure", category: "biome" },
+  },
+  {
+    usStates: ["CA"],
+    banner: { src: scene("scene-redwood-creek.png"), alt: "Redwood forest adventure", category: "biome" },
+  },
+  {
+    usStates: ["FL", "GA", "SC", "NC", "AL", "MS", "LA"],
+    banner: { src: scene("scene-coastal-lighthouse.png"), alt: "Coastal exploration", category: "biome" },
+  },
+  {
+    usStates: ["NY", "NJ", "PA", "CT", "MA", "RI", "NH", "VT", "ME"],
+    banner: { src: scene("scene-coastal-lighthouse.png"), alt: "New England coastal exploration", category: "biome" },
+  },
+  {
+    usStates: ["IL", "OH", "MI", "WI", "MN", "IN"],
+    banner: { src: scene("scene-city-exploration.png"), alt: "City exploration adventure", category: "biome" },
   },
   // International
   {
     countries: ["JP", "KR", "CN", "TW"],
-    banner: { src: "/hero-public.png", alt: "East Asian temple exploration", category: "biome" },
+    banner: { src: scene("scene-east-asian-pagoda.png"), alt: "East Asian temple exploration", category: "biome" },
   },
   {
     countries: ["TH", "VN", "PH", "ID", "MY", "SG"],
-    banner: { src: "/hero-public.png", alt: "Tropical rainforest exploration", category: "biome" },
+    banner: { src: scene("scene-tropical-rainforest.png"), alt: "Tropical rainforest exploration", category: "biome" },
   },
   {
     countries: ["KE", "ZA", "NG", "TZ", "GH", "ET"],
-    banner: { src: "/hero-public.png", alt: "African savanna expedition", category: "biome" },
+    banner: { src: scene("scene-african-savanna.png"), alt: "African savanna expedition", category: "biome" },
   },
   {
     countries: ["AU", "NZ"],
-    banner: { src: "/hero-public.png", alt: "Outback exploration adventure", category: "biome" },
+    banner: { src: scene("scene-coastal-lighthouse.png"), alt: "Coastal exploration adventure", category: "biome" },
   },
   {
     countries: ["NO", "SE", "FI", "IS", "DK"],
-    banner: { src: "/hero-public.png", alt: "Arctic exploration adventure", category: "biome" },
+    banner: { src: scene("scene-adventure-arctic.png"), alt: "Arctic exploration adventure", category: "biome" },
   },
   {
     countries: ["BR", "MX", "CR", "PA", "CO", "PE"],
-    banner: { src: "/hero-public.png", alt: "Tropical rainforest exploration", category: "biome" },
+    banner: { src: scene("scene-tropical-rainforest.png"), alt: "Tropical rainforest exploration", category: "biome" },
+  },
+  {
+    countries: ["GB", "IE", "FR", "DE", "IT", "ES", "PT", "NL", "BE", "CH", "AT"],
+    banner: { src: scene("scene-city-exploration.png"), alt: "European city exploration", category: "biome" },
   },
 ];
 
@@ -177,18 +207,18 @@ function getSeasonBanner(date: Date, latitude: number | null): HeroBannerResult 
 
   if (adjustedMonth >= 2 && adjustedMonth <= 4) {
     // Spring (Mar-May)
-    return { src: "/hero-public.png", alt: "Spring adventure landscape", category: "season" };
+    return { src: scene("scene-adventure-spring.png"), alt: "Spring adventure landscape", category: "season" };
   }
   if (adjustedMonth >= 5 && adjustedMonth <= 7) {
     // Summer (Jun-Aug)
-    return { src: "/hero-public.png", alt: "Summer exploration adventure", category: "season" };
+    return { src: scene("scene-adventure-bright.png"), alt: "Summer exploration adventure", category: "season" };
   }
   if (adjustedMonth >= 8 && adjustedMonth <= 10) {
     // Autumn (Sep-Nov)
-    return { src: "/hero-public.png", alt: "Autumn adventure landscape", category: "season" };
+    return { src: scene("scene-adventure-autumn.png"), alt: "Autumn adventure landscape", category: "season" };
   }
   // Winter (Dec-Feb)
-  return { src: "/hero-public.png", alt: "Winter exploration adventure", category: "season" };
+  return { src: scene("scene-adventure-winter.png"), alt: "Winter exploration adventure", category: "season" };
 }
 
 // ── Main selector ────────────────────────────────────
