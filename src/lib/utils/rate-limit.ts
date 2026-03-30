@@ -8,10 +8,17 @@ import { ApiError } from "./api-auth";
  * Local dev: falls back to in-memory Map when UPSTASH_REDIS_REST_URL is not set.
  */
 
-const USE_UPSTASH = !!(
-  process.env.UPSTASH_REDIS_REST_URL &&
-  process.env.UPSTASH_REDIS_REST_TOKEN
-);
+// Support both naming conventions:
+// - UPSTASH_REDIS_KV_REST_API_URL / _TOKEN (Vercel Marketplace provisioned)
+// - UPSTASH_REDIS_REST_URL / _TOKEN (manual / @upstash/redis default)
+const UPSTASH_URL =
+  process.env.UPSTASH_REDIS_KV_REST_API_URL ||
+  process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN =
+  process.env.UPSTASH_REDIS_KV_REST_API_TOKEN ||
+  process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const USE_UPSTASH = !!(UPSTASH_URL && UPSTASH_TOKEN);
 
 function getIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -81,7 +88,7 @@ function createRateLimiter(opts: {
         const { Ratelimit } = await import("@upstash/ratelimit");
         const { Redis } = await import("@upstash/redis");
         _limiter = new Ratelimit({
-          redis: Redis.fromEnv(),
+          redis: new Redis({ url: UPSTASH_URL!, token: UPSTASH_TOKEN! }),
           limiter: Ratelimit.slidingWindow(opts.max, msToUpstashDuration(opts.windowMs)),
           prefix: `rl:${opts.prefix}`,
         });
