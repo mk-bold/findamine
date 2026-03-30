@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const huntId = searchParams.get("hunt_id");
     const entryType = searchParams.get("type") || "user";
     const period = searchParams.get("period") || "all_time";
-    const limit = parseInt(searchParams.get("limit") || "25");
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "25") || 25, 1), 100);
 
     const supabase = await createSupabaseServiceClient();
 

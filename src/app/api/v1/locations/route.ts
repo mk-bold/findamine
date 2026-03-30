@@ -9,6 +9,9 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
     const { searchParams } = new URL(request.url);
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
@@ -61,14 +64,21 @@ export async function POST(request: NextRequest) {
       throw new ApiError(400, "Latitude and longitude are required");
     }
 
+    // Validate coordinates are valid numbers in range
+    const lat = parseFloat(body.latitude);
+    const lng = parseFloat(body.longitude);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      throw new ApiError(400, "Invalid coordinates: latitude must be -90 to 90, longitude -180 to 180");
+    }
+
     const supabase = await createSupabaseServiceClient();
 
     // Insert with raw SQL for PostGIS geography column
     const { data, error } = await supabase.rpc("insert_location", {
       p_name: body.name,
       p_description: body.description || null,
-      p_latitude: body.latitude,
-      p_longitude: body.longitude,
+      p_latitude: lat,
+      p_longitude: lng,
       p_radius_meters: body.radius_meters || 50,
       p_address: body.address || null,
       p_place_id: body.place_id || null,
@@ -85,9 +95,9 @@ export async function POST(request: NextRequest) {
         .insert({
           name: body.name,
           description: body.description || null,
-          latitude: body.latitude,
-          longitude: body.longitude,
-          coordinates: `SRID=4326;POINT(${body.longitude} ${body.latitude})`,
+          latitude: lat,
+          longitude: lng,
+          coordinates: `SRID=4326;POINT(${lng} ${lat})`,
           radius_meters: body.radius_meters || 50,
           address: body.address || null,
           place_id: body.place_id || null,

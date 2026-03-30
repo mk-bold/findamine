@@ -37,8 +37,23 @@ export async function POST(request: NextRequest) {
     if (!body.team_id || !body.content) {
       throw new ApiError(400, "team_id and content required");
     }
+    if (typeof body.content !== "string" || body.content.length > 2000) {
+      throw new ApiError(400, "Content must be a string of 2000 characters or fewer");
+    }
 
     const supabase = await createSupabaseServiceClient();
+
+    // Verify user is a member of this team
+    const { data: membership } = await supabase
+      .from("team_members")
+      .select("id")
+      .eq("team_id", body.team_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!membership) {
+      throw new ApiError(403, "You must be a member of this team to post");
+    }
 
     const { data, error } = await supabase
       .from("wall_posts")
@@ -46,7 +61,7 @@ export async function POST(request: NextRequest) {
         team_id: body.team_id,
         user_id: user.id,
         post_type: body.post_type || "general",
-        content: body.content,
+        content: body.content.slice(0, 2000),
         is_anonymous: body.is_anonymous || false,
       })
       .select()

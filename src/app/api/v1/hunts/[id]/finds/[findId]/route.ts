@@ -12,12 +12,25 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; findId: string }> }
 ) {
   try {
-    const { findId } = await params;
+    const { id, findId } = await params;
     const user = await getAuthUser(request);
     requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
     const supabase = await createSupabaseServiceClient();
+
+    // Verify hunt ownership
+    const { data: hunt } = await supabase
+      .from("hunts")
+      .select("created_by")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!hunt) throw new ApiError(404, "Hunt not found");
+    if (hunt.created_by !== user.id && !["admin", "researcher"].includes(user.role)) {
+      throw new ApiError(403, "You can only edit finds in your own hunts");
+    }
 
     const allowedFields = [
       "location_id", "task_id", "primer_id", "sort_order",
@@ -49,11 +62,24 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; findId: string }> }
 ) {
   try {
-    const { findId } = await params;
+    const { id, findId } = await params;
     const user = await getAuthUser(request);
     requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const supabase = await createSupabaseServiceClient();
+
+    // Verify hunt ownership
+    const { data: hunt } = await supabase
+      .from("hunts")
+      .select("created_by")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!hunt) throw new ApiError(404, "Hunt not found");
+    if (hunt.created_by !== user.id && !["admin", "researcher"].includes(user.role)) {
+      throw new ApiError(403, "You can only delete finds in your own hunts");
+    }
 
     const { error } = await supabase
       .from("finds")

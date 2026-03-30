@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
           status: childStatus,
         },
         requires_consent: role === "child",
-        verification_token: verificationToken, // Returned so parent can verify immediately
+        verification_sent: !!verificationToken, // Token sent via email only — not exposed in API response
         message: role === "child"
           ? "Child account created. Parental consent verification is required before the child can use the app."
           : "Teen account created and ready to use.",

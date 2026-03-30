@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
     blockChildren(user, "shoutouts");
 
     const body = await request.json();
+    if (!body.receiver_id) throw new ApiError(400, "receiver_id required");
+    if (!body.message || typeof body.message !== "string") throw new ApiError(400, "message required");
+    if (body.message.length > 1000) throw new ApiError(400, "Message must be 1000 characters or fewer");
+    if (body.receiver_id === user.id) throw new ApiError(400, "Cannot send a shoutout to yourself");
 
     const supabase = await createSupabaseServiceClient();
 
@@ -37,7 +41,7 @@ export async function POST(request: NextRequest) {
       .insert({
         sender_id: user.id,
         receiver_id: body.receiver_id,
-        message: body.message,
+        message: body.message.slice(0, 1000),
         hunt_id: body.hunt_id || null,
       })
       .select()

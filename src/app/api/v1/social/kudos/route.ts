@@ -36,6 +36,12 @@ export async function POST(request: NextRequest) {
     if (!body.receiver_id || !body.message) {
       throw new ApiError(400, "receiver_id and message required");
     }
+    if (typeof body.message !== "string" || body.message.length > 1000) {
+      throw new ApiError(400, "Message must be a string of 1000 characters or fewer");
+    }
+    if (body.receiver_id === user.id) {
+      throw new ApiError(400, "Cannot send kudos to yourself");
+    }
 
     const supabase = await createSupabaseServiceClient();
 
@@ -45,7 +51,7 @@ export async function POST(request: NextRequest) {
         sender_id: user.id,
         receiver_id: body.receiver_id,
         message_type: body.message_type || "custom",
-        message: body.message,
+        message: body.message.slice(0, 1000),
         hunt_id: body.hunt_id || null,
       })
       .select()

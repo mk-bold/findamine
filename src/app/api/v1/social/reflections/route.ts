@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
     if (!user) throw new ApiError(401, "Not authenticated");
 
     const body = await request.json();
+    if (!body.content || typeof body.content !== "string") throw new ApiError(400, "content required");
+    if (body.content.length > 5000) throw new ApiError(400, "Content must be 5000 characters or fewer");
+
     const supabase = await createSupabaseServiceClient();
 
     const { data, error } = await supabase
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         hunt_id: body.hunt_id || null,
-        content: body.content,
+        content: body.content.slice(0, 5000),
       })
       .select()
       .single();
