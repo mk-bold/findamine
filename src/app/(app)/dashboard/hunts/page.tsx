@@ -29,7 +29,7 @@ export default async function MyHuntsPage() {
         <h1 className="text-lg font-semibold text-gray-900">My Hunts</h1>
         <Link
           href="/dashboard/hunts/new"
-          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          className="btn-primary px-4 py-2 text-sm font-medium"
         >
           Create Hunt
         </Link>
@@ -40,7 +40,7 @@ export default async function MyHuntsPage() {
           <p className="text-gray-500 mb-4">You haven&apos;t created any hunts yet.</p>
           <Link
             href="/dashboard/hunts/new"
-            className="text-sky-600 hover:underline"
+            className="text-themed-primary hover:underline"
           >
             Create your first hunt
           </Link>

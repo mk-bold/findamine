@@ -67,7 +67,7 @@ export default function SocialPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
-      <Link href="/dashboard" className="text-sm text-sky-600 hover:underline mb-4 inline-block">
+      <Link href="/dashboard" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Dashboard
       </Link>
       <h1 className="text-lg font-semibold text-gray-900 mb-6">Social</h1>

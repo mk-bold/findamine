@@ -26,7 +26,7 @@ export default async function HuntDetailPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">
-      <Link href="/browse" className="text-sm text-sky-600 hover:underline mb-4 inline-block">
+      <Link href="/browse" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Back to browse
       </Link>
 
@@ -83,7 +83,7 @@ export default async function HuntDetailPage({
 
       <Link
         href={`/play/${hunt.id}`}
-        className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700 mb-8"
+        className="inline-block btn-primary px-6 py-3 text-sm font-medium mb-8"
       >
         Start Hunt
       </Link>

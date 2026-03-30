@@ -647,7 +647,7 @@ export default function PlayPage() {
             <button
               onClick={handleRequestHint}
               disabled={hintLevel >= 4}
-              className="text-sm text-sky-600 hover:underline disabled:text-gray-500"
+              className="text-sm text-themed-primary hover:underline disabled:text-gray-500"
             >
               {hintLevel === 0 ? "Need a hint?" : hintLevel < 4 ? `Get more help (Level ${hintLevel + 1})` : "No more hints available"}
             </button>
@@ -662,7 +662,7 @@ export default function PlayPage() {
               Take a photo of yourself at this location to remember your adventure!
             </p>
 
-            <label className="inline-block rounded-md bg-sky-600 px-6 py-3 text-sm font-medium text-white hover:bg-sky-700 cursor-pointer mb-4">
+            <label className="inline-block btn-primary px-6 py-3 text-sm font-medium cursor-pointer mb-4">
               Take Photo
               <input
                 type="file"
