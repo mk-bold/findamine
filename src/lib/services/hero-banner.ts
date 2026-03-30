@@ -42,7 +42,7 @@ const ROLE_HEROES: Record<string, HeroBannerResult> = {
   teen: { src: "/hero-teen.png", alt: "Teens exploring an urban landscape", category: "age-band" },
   parent: { src: "/hero-family.png", alt: "Family adventure outdoors", category: "age-band" },
   teacher: { src: "/hero-class.png", alt: "Classroom scavenger hunt", category: "age-band" },
-  game_master: { src: "/hero-class.png", alt: "Classroom scavenger hunt", category: "age-band" },
+  hunt_creator: { src: "/hero-class.png", alt: "Classroom scavenger hunt", category: "age-band" },
   admin: { src: "/hero-adult.png", alt: "Professional team exploration", category: "age-band" },
   researcher: { src: "/hero-adult.png", alt: "Professional team exploration", category: "age-band" },
 };

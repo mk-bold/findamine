@@ -27,7 +27,7 @@ export default function Navbar({ user }: NavbarProps) {
     ? [
         { href: "/dashboard", label: "Dashboard" },
         { href: "/browse", label: "Browse Hunts" },
-        ...(["teacher", "game_master", "admin", "researcher"].includes(user.role)
+        ...(["teacher", "hunt_creator", "admin", "researcher"].includes(user.role)
           ? [{ href: "/dashboard/hunts/new", label: "Create Hunt" }]
           : []),
         ...(["admin", "researcher"].includes(user.role)

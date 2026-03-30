@@ -22,7 +22,7 @@ export function createCrudHandlers(
   }
 ) {
   const {
-    writeRoles = ["teacher", "game_master", "admin", "researcher"],
+    writeRoles = ["teacher", "hunt_creator", "admin", "researcher"],
     allowedInsertFields,
     allowedUpdateFields,
     ownerColumn = "created_by",
@@ -94,7 +94,7 @@ export function createItemHandlers(
   }
 ) {
   const {
-    writeRoles = ["teacher", "game_master", "admin", "researcher"],
+    writeRoles = ["teacher", "hunt_creator", "admin", "researcher"],
     allowedUpdateFields,
   } = options;
 

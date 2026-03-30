@@ -3,7 +3,7 @@ export type UserRole =
   | "teen"
   | "parent"
   | "teacher"
-  | "game_master"
+  | "hunt_creator"
   | "admin"
   | "researcher";
 

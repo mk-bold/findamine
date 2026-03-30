@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin", "researcher");
+    requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
     if (!body.latitude || !body.longitude) {

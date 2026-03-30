@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     aiLimiter.check(request);
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin", "researcher");
+    requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
     const { content_type, location_name, subject_domain, grade_min, grade_max, existing_content } = body;

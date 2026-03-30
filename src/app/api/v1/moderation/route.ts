@@ -5,7 +5,7 @@ import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/a
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin");
+    requireRole(user, "teacher", "hunt_creator", "admin");
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "pending";

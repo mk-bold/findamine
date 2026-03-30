@@ -37,7 +37,7 @@ export async function POST(
   try {
     const { id } = await params;
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin", "researcher");
+    requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
     const supabase = await createSupabaseServiceClient();

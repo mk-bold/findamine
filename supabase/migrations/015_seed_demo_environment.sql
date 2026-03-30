@@ -17,6 +17,8 @@ ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_auth_id_fkey;
 DO $$
 DECLARE
   ns UUID := '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; -- DNS namespace
+  -- Real owner account (mark.keith@gmail.com)
+  u_owner UUID;
   -- Admin/Staff
   u_mark UUID;
   u_sarah UUID;
@@ -62,6 +64,14 @@ DECLARE
   h_heritage UUID;
 
 BEGIN
+  -- Look up the real owner account (must already exist in the users table)
+  SELECT id INTO u_owner FROM public.users WHERE email = 'mark.keith@gmail.com' LIMIT 1;
+
+  -- If the owner account doesn't exist yet, use the seed mark as fallback
+  IF u_owner IS NULL THEN
+    RAISE NOTICE 'Owner account mark.keith@gmail.com not found. Using seed user as creator.';
+  END IF;
+
   -- Generate user UUIDs
   u_mark := uuid_generate_v5(ns, 'seed-mark-keith');
   u_sarah := uuid_generate_v5(ns, 'seed-sarah-chen');
@@ -109,7 +119,7 @@ BEGIN
   -- Admin/Staff
   (u_mark, u_mark, 'seed_mark@findamine.app', 'Dr. Mark Keith', 'admin', 'active', NULL),
   (u_sarah, u_sarah, 'seed_sarah@findamine.app', 'Sarah Chen', 'researcher', 'active', NULL),
-  (u_james, u_james, 'seed_james@findamine.app', 'James Whitfield', 'game_master', 'active', NULL),
+  (u_james, u_james, 'seed_james@findamine.app', 'James Whitfield', 'hunt_creator', 'active', NULL),
   -- Teachers
   (u_rivera, u_rivera, 'seed_rivera@findamine.app', 'Ms. Rivera', 'teacher', 'active', NULL),
   (u_nakamura, u_nakamura, 'seed_nakamura@findamine.app', 'Mr. Nakamura', 'teacher', 'active', NULL),

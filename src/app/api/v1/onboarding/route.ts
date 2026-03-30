@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     if (!milestoneSet.has("first_hunt_started") && ["child", "teen", "parent"].includes(user.role)) {
       nextSteps.push("Join your first hunt");
     }
-    if (!milestoneSet.has("first_hunt_started") && ["teacher", "game_master"].includes(user.role)) {
+    if (!milestoneSet.has("first_hunt_started") && ["teacher", "hunt_creator"].includes(user.role)) {
       nextSteps.push("Create your first hunt");
     }
 

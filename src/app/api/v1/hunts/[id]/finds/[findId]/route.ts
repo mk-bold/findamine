@@ -14,7 +14,7 @@ export async function PUT(
   try {
     const { findId } = await params;
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin", "researcher");
+    requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
     const supabase = await createSupabaseServiceClient();
@@ -51,7 +51,7 @@ export async function DELETE(
   try {
     const { findId } = await params;
     const user = await getAuthUser(request);
-    requireRole(user, "teacher", "game_master", "admin", "researcher");
+    requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const supabase = await createSupabaseServiceClient();
 

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       "teen",
       "parent",
       "teacher",
-      "game_master",
+      "hunt_creator",
     ];
     let userRole = selfRegisterRoles.includes(role) ? role : "parent";
 
