@@ -36,9 +36,10 @@ export function AgeBandProvider({
       document.documentElement.style.setProperty(key, value);
     }
 
-    // Set font
+    // Set font family only — do NOT set root font-size here.
+    // Changing root font-size breaks all Tailwind rem-based utilities (spacing, sizing).
+    // The --font-size-base CSS variable is available for components that need age-appropriate text.
     document.documentElement.style.fontFamily = THEME_TOKENS[band].fontFamily;
-    document.documentElement.style.fontSize = THEME_TOKENS[band].fontSizeBase;
   }, [band]);
 
   return (
