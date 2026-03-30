@@ -20,11 +20,18 @@ export default function HotColdMeter({ zone, color, label, emoji, distance }: Ho
   const position = ZONE_POSITIONS[zone] || 50;
 
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl bg-white/90 backdrop-blur p-4 shadow-lg">
-      <div className="text-2xl">{emoji}</div>
+    <div
+      className="flex flex-col items-center gap-2 rounded-xl bg-white/90 backdrop-blur p-4 shadow-lg"
+      role="meter"
+      aria-valuenow={position}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Hot cold meter: ${label}, ${distance}`}
+    >
+      <div className="text-2xl" aria-hidden="true">{emoji}</div>
 
       {/* Meter bar */}
-      <div className="relative w-8 h-48 rounded-full overflow-hidden bg-gradient-to-t from-blue-500 via-green-400 via-orange-400 to-red-500">
+      <div className="relative w-8 h-48 rounded-full overflow-hidden bg-gradient-to-t from-blue-500 via-green-400 via-orange-400 to-red-500" aria-hidden="true">
         {/* Indicator */}
         <div
           className="absolute left-0 right-0 h-3 rounded-full bg-white shadow-md border-2 transition-all duration-700 ease-out"

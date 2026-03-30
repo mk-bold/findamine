@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const STEPS = [
   {
@@ -58,13 +58,36 @@ export default function Onboarding() {
     });
   }, []);
 
-  // Escape key to dismiss
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Escape key + focus trap
   useEffect(() => {
     if (!show) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleComplete();
+      if (e.key === "Escape") {
+        handleComplete();
+        return;
+      }
+      // Focus trap: keep Tab within modal
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
+    // Focus the modal on open
+    modalRef.current?.querySelector<HTMLElement>("button")?.focus();
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [show, handleComplete]);
 
@@ -81,7 +104,7 @@ export default function Onboarding() {
   const current = STEPS[step];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-label="Welcome tutorial">
+    <div ref={modalRef} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-label="Welcome tutorial">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
         {/* Step indicator */}
         <div className="flex gap-1 mb-6 justify-center">

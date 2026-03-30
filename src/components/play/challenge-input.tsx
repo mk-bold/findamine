@@ -127,13 +127,15 @@ function MultipleChoice({
       {question && (
         <p className="text-sm text-gray-700 mb-3">{question}</p>
       )}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-4" role="radiogroup" aria-label={question || "Answer options"}>
         {options.map((option, idx) => {
           const letter = String.fromCharCode(65 + idx); // A, B, C, D
           const isSelected = answer === option;
           return (
             <button
               key={idx}
+              role="radio"
+              aria-checked={isSelected}
               onClick={() => onAnswerChange(option)}
               disabled={disabled}
               className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
@@ -142,7 +144,7 @@ function MultipleChoice({
                   : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
               } disabled:opacity-50`}
             >
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold mr-3">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold mr-3" aria-hidden="true">
                 {letter}
               </span>
               {option}
@@ -508,11 +510,25 @@ function SketchDraw({
 
       <button
         onClick={onSubmit}
-        disabled={!hasDrawn || disabled}
+        disabled={(!hasDrawn && !answer) || disabled}
         className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
       >
         Submit Drawing
       </button>
+
+      {/* Keyboard alternative: text description */}
+      <div className="mt-3 border-t border-gray-200 pt-3">
+        <p className="text-xs text-gray-500 mb-1">Can&apos;t draw? Describe your answer instead:</p>
+        <textarea
+          value={answer.startsWith("[sketch:") ? "" : answer}
+          onChange={(e) => onAnswerChange(e.target.value)}
+          placeholder="Describe what you would draw..."
+          rows={2}
+          disabled={disabled}
+          aria-label="Text alternative for drawing"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50 resize-y"
+        />
+      </div>
     </div>
   );
 }
