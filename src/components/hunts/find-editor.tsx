@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import LocationPicker from "@/components/maps/location-picker";
+import CurriculumBrowser from "./curriculum-browser";
 
 interface FindEditorProps {
   huntId: string;
@@ -27,6 +28,8 @@ const CHALLENGE_TYPES = [
 export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryTaskId, setLibraryTaskId] = useState<string | null>(null);
 
   // Location fields
   const [locationName, setLocationName] = useState("");
@@ -109,7 +112,11 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
       const locData = await locRes.json();
       const locationId = locData.location?.id;
 
-      // 2. Build task content based on challenge type
+      // 2. Get or create task
+      let taskId = libraryTaskId; // Use library task if selected
+
+      if (!taskId) {
+      // Build task content based on challenge type
       const content: Record<string, unknown> = { question };
 
       if (challengeType === "multiple_choice") {
@@ -139,7 +146,8 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
         throw new Error(d.error || "Failed to create task");
       }
       const taskData = await taskRes.json();
-      const taskId = taskData.record?.id || taskData.task?.id;
+      taskId = taskData.record?.id || taskData.task?.id;
+      } // end if (!taskId)
 
       // 4. Optionally create primer
       let primerId = null;
@@ -260,9 +268,58 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
         />
       </fieldset>
 
+      {/* ── Curriculum Library Browser ── */}
+      {showLibrary && (
+        <div className="mb-5">
+          <CurriculumBrowser
+            onSelect={(task) => {
+              setLibraryTaskId(task.id);
+              setTaskTitle(task.title);
+              setChallengeType(task.challenge_type);
+              setQuestion((task.content?.question as string) || "");
+              if (task.challenge_type === "multiple_choice" && Array.isArray(task.content?.options)) {
+                setOptions(task.content.options as string[]);
+                setCorrectAnswer((task.content.correct_answer as string) || "");
+              }
+              if (task.challenge_type === "sorting_ordering" && Array.isArray(task.content?.items)) {
+                setSortingItems(task.content.items as string[]);
+              }
+              if (!["multiple_choice", "sorting_ordering"].includes(task.challenge_type)) {
+                setCorrectAnswer((task.content?.correct_answer as string) || "");
+              }
+              setShowLibrary(false);
+            }}
+            onCancel={() => setShowLibrary(false)}
+          />
+        </div>
+      )}
+
       {/* ── Challenge ── */}
       <fieldset className="mb-5">
-        <legend className="text-sm font-medium text-gray-700 mb-2">Challenge</legend>
+        <legend className="text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+          <span>Challenge</span>
+          {!showLibrary && (
+            <button
+              type="button"
+              onClick={() => setShowLibrary(true)}
+              className="text-xs text-sky-600 hover:underline font-normal"
+            >
+              Browse Library ({libraryTaskId ? "change" : "200+ tasks"})
+            </button>
+          )}
+        </legend>
+        {libraryTaskId && (
+          <div className="rounded-md bg-sky-50 border border-sky-200 px-3 py-2 mb-3 flex items-center justify-between">
+            <span className="text-xs text-sky-700">Using library task: <strong>{taskTitle}</strong></span>
+            <button
+              type="button"
+              onClick={() => { setLibraryTaskId(null); setTaskTitle(""); setQuestion(""); setChallengeType("multiple_choice"); }}
+              className="text-xs text-sky-500 hover:text-sky-700"
+            >
+              Clear
+            </button>
+          </div>
+        )}
         <div className="space-y-3">
           <input
             value={taskTitle}
