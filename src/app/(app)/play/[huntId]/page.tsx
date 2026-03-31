@@ -59,6 +59,9 @@ export default function PlayPage() {
   const [arrived, setArrived] = useState(false);
   const [hintText, setHintText] = useState("");
   const [hintLevel, setHintLevel] = useState(0);
+  const [clueHintText, setClueHintText] = useState("");
+  const [clueHintLevel, setClueHintLevel] = useState(0);
+  const [clueHintTotal, setClueHintTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completedFinds, setCompletedFinds] = useState<Set<string>>(new Set());
@@ -142,6 +145,9 @@ export default function PlayPage() {
     setArrived(false);
     setHintText("");
     setHintLevel(0);
+    setClueHintText("");
+    setClueHintLevel(0);
+    setClueHintTotal(0);
     setGpsStatus("waiting");
     setError(null);
   }, [currentIndex, currentFind, completedFinds]);
@@ -224,6 +230,24 @@ export default function PlayPage() {
   const handleClueRead = useCallback(() => {
     setStep("navigate");
   }, []);
+
+  const handleClueHint = useCallback(async () => {
+    if (!currentFind) return;
+    const nextLevel = clueHintLevel + 1;
+    try {
+      const res = await safeFetch(`/api/v1/play/${huntId}/clue-hint`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ find_id: currentFind.id, level: nextLevel }),
+      });
+      const data = await res.json();
+      setClueHintText(data.hint);
+      setClueHintLevel(data.level);
+      setClueHintTotal(data.total_hints);
+    } catch {
+      // No clue hints available — silently ignore
+    }
+  }, [currentFind, huntId, clueHintLevel]);
 
   const handleSkipNav = useCallback(async () => {
     if (!currentFind) return;
@@ -480,9 +504,25 @@ export default function PlayPage() {
                 Heading to: {(currentFind.locations as { name: string }).name}
               </p>
             )}
-            <button onClick={handleClueRead} className="w-full btn-primary px-4 py-2 text-sm font-medium">
-              Start Navigating
-            </button>
+            {clueHintText && (
+              <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 mb-4">
+                <p className="text-xs font-medium text-indigo-700 mb-1">Clue Hint {clueHintLevel}</p>
+                <p className="text-sm text-indigo-900">{clueHintText}</p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              {clueHintLevel < clueHintTotal || (clueHintLevel === 0 && !clueHintText) ? (
+                <button
+                  onClick={handleClueHint}
+                  className="flex-1 rounded-md border border-indigo-300 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50"
+                >
+                  Need a hint? (-2 pts)
+                </button>
+              ) : null}
+              <button onClick={handleClueRead} className="flex-1 btn-primary px-4 py-2 text-sm font-medium">
+                Start Navigating
+              </button>
+            </div>
           </div>
         )}
 
@@ -585,6 +625,22 @@ export default function PlayPage() {
                     </div>
                     <p className="text-sm text-gray-500 mt-2">Acquiring GPS signal...</p>
                   </div>
+                )}
+
+                {/* Clue hints during navigation */}
+                {clueHintText && (
+                  <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 mb-3">
+                    <p className="text-xs font-medium text-indigo-700 mb-1">Clue Hint {clueHintLevel}</p>
+                    <p className="text-sm text-indigo-900">{clueHintText}</p>
+                  </div>
+                )}
+                {(clueHintLevel < clueHintTotal || (clueHintLevel === 0 && !clueHintText)) && (
+                  <button
+                    onClick={handleClueHint}
+                    className="mb-3 rounded-md border border-indigo-300 px-3 py-1.5 text-xs text-indigo-700 hover:bg-indigo-50"
+                  >
+                    Stuck? Get a clue hint (-2 pts)
+                  </button>
                 )}
 
                 <button
@@ -721,19 +777,27 @@ export default function PlayPage() {
             )}
 
             {breakdown && (
-              <div className="grid grid-cols-3 gap-2 mb-4 text-center text-xs">
-                <div className="rounded bg-gray-50 p-2">
-                  <div className="font-bold text-gray-700">{breakdown.correctness}</div>
-                  <div className="text-gray-500">Accuracy</div>
+              <div className="space-y-2 mb-4">
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded bg-gray-50 p-2">
+                    <div className="font-bold text-gray-700">{breakdown.correctness}</div>
+                    <div className="text-gray-500">Accuracy</div>
+                  </div>
+                  <div className="rounded bg-gray-50 p-2">
+                    <div className="font-bold text-gray-700">{breakdown.masteryBonus}</div>
+                    <div className="text-gray-500">Mastery</div>
+                  </div>
+                  <div className="rounded bg-gray-50 p-2">
+                    <div className="font-bold text-gray-700">{breakdown.completion}</div>
+                    <div className="text-gray-500">Completion</div>
+                  </div>
                 </div>
-                <div className="rounded bg-gray-50 p-2">
-                  <div className="font-bold text-gray-700">{breakdown.masteryBonus}</div>
-                  <div className="text-gray-500">Mastery</div>
-                </div>
-                <div className="rounded bg-gray-50 p-2">
-                  <div className="font-bold text-gray-700">{breakdown.completion}</div>
-                  <div className="text-gray-500">Completion</div>
-                </div>
+                {(breakdown.hintPenalty > 0 || clueHintLevel > 0) && (
+                  <div className="text-xs text-gray-500 text-center">
+                    {clueHintLevel > 0 && <span>Navigation hints: {clueHintLevel} (-{clueHintLevel * 2} pts) </span>}
+                    {breakdown.hintPenalty > 0 && <span>Challenge hints: -{breakdown.hintPenalty} pts</span>}
+                  </div>
+                )}
               </div>
             )}
 

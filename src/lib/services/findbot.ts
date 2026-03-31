@@ -209,6 +209,302 @@ Keep it to 2-3 sentences. Make it engaging and informative.`,
   }
 }
 
+// ── AI Orchestration (GPT-4o-mini for cost efficiency) ─────────
+
+import OpenAI from "openai";
+
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) _openai = new OpenAI();
+  return _openai;
+}
+
+/**
+ * Generate a clue + 3 progressive clue hints for a stop.
+ */
+export async function generateClueWithHints(params: {
+  primerContent: Record<string, unknown>;
+  taskContent: Record<string, unknown>;
+  locationName?: string;
+  locationType?: string;
+  difficultyTier: "easy" | "medium" | "hard";
+  gradeRange?: { min: number; max: number };
+}): Promise<{ clue_text: string; clue_hints: string[] }> {
+  const { primerContent, taskContent, locationName, locationType, difficultyTier, gradeRange } = params;
+
+  const difficultyInstructions = {
+    easy: "The clue should nearly give away the location. A young child should be able to find it with minimal effort.",
+    medium: "The clue should require inference from the primer knowledge. The player must think about what they learned to decode it.",
+    hard: "The clue should be a riddle that requires combining primer knowledge with environmental observation. It should take real thinking.",
+  };
+
+  const prompt = `Generate a clue and 3 progressive hints for a GPS scavenger hunt stop.
+
+Context:
+- Location: "${locationName || "a location"}" (type: ${locationType || "any"})
+- Primer teaches: ${JSON.stringify(primerContent).slice(0, 500)}
+- Challenge asks: ${(taskContent as { question?: string }).question || JSON.stringify(taskContent).slice(0, 300)}
+- Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 8}
+- Difficulty: ${difficultyTier} — ${difficultyInstructions[difficultyTier]}
+
+Generate:
+1. A clue (2-3 sentences) that guides the player toward the location
+2. Three progressive hints, each more specific:
+   - Hint 1: General direction or area hint
+   - Hint 2: Specific landmark or feature near the location
+   - Hint 3: Nearly gives away the exact spot
+
+Format as JSON: {"clue_text": "...", "clue_hints": ["hint1", "hint2", "hint3"]}`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 400,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You create engaging clues for educational GPS scavenger hunts. Output valid JSON only." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      const parsed = JSON.parse(text);
+      return {
+        clue_text: parsed.clue_text || "Head to the next location!",
+        clue_hints: Array.isArray(parsed.clue_hints) ? parsed.clue_hints.slice(0, 3) : [],
+      };
+    }
+  } catch {
+    // Fall through to defaults
+  }
+
+  return { clue_text: "Head to the next location!", clue_hints: [] };
+}
+
+/**
+ * Suggest primer-task pairings based on shared attributes.
+ */
+export async function suggestPairings(params: {
+  availableTasks: { id: string; title: string; subject_domain: string; tags: string[]; challenge_type: string; difficulty_rating: number }[];
+  availablePrimers: { id: string; title: string; subject_domain: string; tags: string[]; difficulty_rating: number }[];
+  targetCount?: number;
+}): Promise<{ pairings: { task_id: string; primer_id: string; reasoning: string }[] }> {
+  const { availableTasks, availablePrimers, targetCount = 5 } = params;
+
+  const prompt = `Given these available tasks and primers for a GPS educational scavenger hunt, suggest the ${targetCount} best primer-task pairings.
+
+Tasks:
+${availableTasks.map(t => `- ${t.id}: "${t.title}" [${t.subject_domain}] tags: ${t.tags.join(",")} type: ${t.challenge_type} difficulty: ${t.difficulty_rating}`).join("\n")}
+
+Primers:
+${availablePrimers.map(p => `- ${p.id}: "${p.title}" [${p.subject_domain}] tags: ${p.tags.join(",")}`).join("\n")}
+
+Match primers to tasks where:
+1. Subject domains align
+2. Tags overlap (shared topics)
+3. The primer teaches a concept the task tests
+4. Difficulty levels are compatible
+
+Format as JSON: {"pairings": [{"task_id": "...", "primer_id": "...", "reasoning": "..."}]}`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 800,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You are an educational content curator. Output valid JSON only." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      return JSON.parse(text);
+    }
+  } catch {
+    // Fall through
+  }
+
+  return { pairings: [] };
+}
+
+/**
+ * Generate a complete primer + task pair from a topic or lesson plan.
+ */
+export async function generateModule(params: {
+  subject: string;
+  gradeBand: string;
+  challengeType: string;
+  difficultyTier: "easy" | "medium" | "hard";
+  locationType: string;
+  topic: string;
+  tags?: string[];
+  lessonPlanText?: string; // Optional: teacher pastes their lesson plan
+}): Promise<{
+  primer: { title: string; content: Record<string, unknown>; learning_objectives: string[] };
+  task: { title: string; content: Record<string, unknown>; learning_objectives: string[] };
+}> {
+  const { subject, gradeBand, challengeType, difficultyTier, locationType, topic, tags, lessonPlanText } = params;
+
+  const prompt = `Generate a primer + task pair for a GPS educational scavenger hunt.
+
+Specifications:
+- Subject: ${subject}
+- Grade band: ${gradeBand}
+- Challenge type: ${challengeType}
+- Difficulty: ${difficultyTier}
+- Location type: ${locationType}
+- Topic: ${topic}
+${tags?.length ? `- Tags: ${tags.join(", ")}` : ""}
+${lessonPlanText ? `\nTeacher's lesson plan for context:\n${lessonPlanText.slice(0, 1000)}` : ""}
+
+Generate:
+
+1. PRIMER: A short educational review that teaches the concept before the challenge.
+   - Title (concise)
+   - Content as JSON: {"text": "2-4 sentences explaining the concept", "items": ["key fact 1", "key fact 2", "key fact 3"]}
+   - Learning objectives (1-2 specific things students will understand)
+
+2. TASK: A challenge question that tests the concept from the primer.
+   - Title (concise)
+   - Content as JSON matching the challenge type:
+     - multiple_choice: {"question": "...", "options": [...], "correct_answer": "...", "hints": [...]}
+     - numeric_entry: {"question": "...", "unit": "...", "hints": [...]}
+     - short_text: {"question": "...", "correct_answer": null, "hints": [...]}
+     - photo_observation: {"question": "...", "hints": [...]}
+     - sketch_draw: {"question": "...", "hints": [...]}
+     - data_collection: {"question": "...", "hints": [...]}
+     - creative_writing: {"question": "...", "hints": [...]}
+     - audio_response: {"question": "...", "hints": [...]}
+     - sorting_ordering: {"question": "...", "items": [...], "hints": [...]}
+     - team_debate: {"question": "...", "hints": [...]}
+   - Include 3-4 progressive hints
+   - Learning objectives (1-2 specific skills practiced)
+
+Format as JSON:
+{
+  "primer": {"title": "...", "content": {...}, "learning_objectives": [...]},
+  "task": {"title": "...", "content": {...}, "learning_objectives": [...]}
+}`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 1200,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You are an expert educational content designer for outdoor learning experiences. Create engaging, age-appropriate content. Output valid JSON only." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      return JSON.parse(text);
+    }
+  } catch {
+    // Fall through
+  }
+
+  return {
+    primer: { title: topic, content: { text: `Learn about ${topic}.` }, learning_objectives: [] },
+    task: { title: `${topic} Challenge`, content: { question: `What did you learn about ${topic}?` }, learning_objectives: [] },
+  };
+}
+
+/**
+ * Recommend a complete hunt composition from the library.
+ */
+export async function recommendHunt(params: {
+  availableTasks: { id: string; title: string; subject_domain: string; tags: string[]; challenge_type: string; difficulty_rating: number; location_type: string; estimated_minutes: number }[];
+  availablePrimers: { id: string; title: string; subject_domain: string; tags: string[]; difficulty_rating: number; location_type: string }[];
+  pairingHistory?: { primer_id: string; task_id: string; avg_score: number; times_used: number }[];
+  huntSpec: {
+    subject_domains: string[];
+    grade_band: string;
+    target_audience: string;
+    location_type: string;
+    target_duration_min: number;
+    difficulty_progression: string;
+    num_stops: number;
+    theme?: string;
+  };
+}): Promise<{
+  title: string;
+  description: string;
+  theme_narrative: string;
+  stops: { task_id: string; primer_id: string; sort_order: number; suggested_clue: string; clue_hints: string[] }[];
+}> {
+  const { availableTasks, availablePrimers, pairingHistory, huntSpec } = params;
+
+  const prompt = `Design a complete GPS scavenger hunt from the available content library.
+
+Hunt specifications:
+- Subjects: ${huntSpec.subject_domains.join(", ")}
+- Grade band: ${huntSpec.grade_band}
+- Audience: ${huntSpec.target_audience}
+- Location type: ${huntSpec.location_type}
+- Target duration: ${huntSpec.target_duration_min} minutes
+- Number of stops: ${huntSpec.num_stops}
+- Difficulty progression: ${huntSpec.difficulty_progression}
+${huntSpec.theme ? `- Theme: ${huntSpec.theme}` : ""}
+
+Available tasks (pick ${huntSpec.num_stops}):
+${availableTasks.slice(0, 30).map(t => `- ${t.id}: "${t.title}" [${t.subject_domain}/${t.challenge_type}] diff:${t.difficulty_rating} loc:${t.location_type} ${t.estimated_minutes}min tags:${t.tags.join(",")}`).join("\n")}
+
+Available primers:
+${availablePrimers.slice(0, 30).map(p => `- ${p.id}: "${p.title}" [${p.subject_domain}] diff:${p.difficulty_rating} loc:${p.location_type} tags:${p.tags.join(",")}`).join("\n")}
+
+${pairingHistory?.length ? `\nHistorical pairings (prefer high-scoring combos):\n${pairingHistory.slice(0, 10).map(h => `- primer:${h.primer_id} + task:${h.task_id} avg_score:${h.avg_score} used:${h.times_used}x`).join("\n")}` : ""}
+
+Rules:
+1. Pick tasks that match the location_type and subject domains
+2. Vary challenge_types across stops (no two consecutive same type)
+3. Order by difficulty_rating per the difficulty_progression setting
+4. Match each task with the best primer (shared subject/tags)
+5. Generate a clue + 3 hints per stop
+6. Total estimated time should be close to ${huntSpec.target_duration_min} minutes
+7. Create a cohesive hunt title, description, and narrative
+
+Format as JSON:
+{
+  "title": "...",
+  "description": "...",
+  "theme_narrative": "...",
+  "stops": [
+    {"task_id": "...", "primer_id": "...", "sort_order": 0, "suggested_clue": "...", "clue_hints": ["...", "...", "..."]}
+  ]
+}`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 2000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You are an expert educational experience designer. Create engaging, well-sequenced GPS scavenger hunts. Output valid JSON only." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      return JSON.parse(text);
+    }
+  } catch {
+    // Fall through
+  }
+
+  return {
+    title: "Custom Hunt",
+    description: "A custom scavenger hunt.",
+    theme_narrative: "",
+    stops: [],
+  };
+}
+
 function getFallbackHint(level: number): string {
   const fallbacks = [
     "Take a moment to look around. What do you notice? Re-read the clue carefully.",

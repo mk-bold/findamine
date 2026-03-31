@@ -11,7 +11,8 @@ export interface ScoringConfig {
   masteryBonusWeight: number;
   completionWeight: number;
   speedWeight: number;
-  hintPenaltyPerLevel: number;
+  clueHintPenalty: number;      // -2 per clue hint (navigation)
+  challengeHintPenalty: number;  // -5 per challenge hint (learning)
   maxScore: number;
   minScore: number;
 }
@@ -21,7 +22,8 @@ export const DEFAULT_SCORING: ScoringConfig = {
   masteryBonusWeight: 0.15,
   completionWeight: 0.15,
   speedWeight: 0.10,
-  hintPenaltyPerLevel: 5,
+  clueHintPenalty: 2,
+  challengeHintPenalty: 5,
   maxScore: 100,
   minScore: 5,
 };
@@ -30,7 +32,9 @@ export interface ScoringInput {
   isCorrect: boolean;
   partialCredit?: number; // 0-1 scale for partial answers
   attemptNumber: number;
-  hintsUsed: number;
+  hintsUsed: number;              // legacy — total hints (backward compat)
+  clueHintsUsed?: number;        // clue/navigation hints used
+  challengeHintsUsed?: number;   // challenge/learning hints used
   timeSpentSeconds: number;
   expectedTimeSeconds?: number;
   isFirstAttempt: boolean;
@@ -85,8 +89,12 @@ export function calculateScore(
     speed = ratio >= 1.5 ? 10 : ratio >= 1.0 ? 5 : 0;
   }
 
-  // Hint penalty
-  const hintPenalty = input.hintsUsed * config.hintPenaltyPerLevel;
+  // Hint penalty (split: clue hints cost less than challenge hints)
+  const clueHints = input.clueHintsUsed ?? 0;
+  const challengeHints = input.challengeHintsUsed ?? input.hintsUsed ?? 0;
+  const hintPenalty =
+    clueHints * config.clueHintPenalty +
+    challengeHints * config.challengeHintPenalty;
 
   // Effort credit (minimum points for any attempt)
   const effortCredit = input.isCorrect ? 0 : config.minScore;

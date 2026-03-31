@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     const locationDep = searchParams.get("location_dependency");
     const challengeType = searchParams.get("challenge_type");
     const q = searchParams.get("q");
+    const tag = searchParams.get("tag");
+    const theme = searchParams.get("theme");
+    const difficultyMin = searchParams.get("difficulty_min");
+    const difficultyMax = searchParams.get("difficulty_max");
     const type = searchParams.get("type") || "tasks"; // tasks or primers
     const limit = parseInt(searchParams.get("limit") || "50");
 
@@ -35,6 +39,10 @@ export async function GET(request: NextRequest) {
       if (subject) query = query.eq("subject_domain", subject);
       if (locationDep) query = query.eq("location_dependency", locationDep);
       if (locationType && locationType !== "any") query = query.eq("location_type", locationType);
+      if (tag) query = query.contains("tags", [tag]);
+      if (theme) query = query.contains("themes", [theme]);
+      if (difficultyMin) query = query.gte("difficulty_rating", parseInt(difficultyMin));
+      if (difficultyMax) query = query.lte("difficulty_rating", parseInt(difficultyMax));
       if (q) query = query.or(`title.ilike.%${q}%`);
 
       const { data, error } = await query;
@@ -58,6 +66,10 @@ export async function GET(request: NextRequest) {
     if (locationType && locationType !== "any") query = query.eq("location_type", locationType);
     if (gradeMin) query = query.gte("grade_range_max", parseInt(gradeMin));
     if (gradeMax) query = query.lte("grade_range_min", parseInt(gradeMax));
+    if (tag) query = query.contains("tags", [tag]);
+    if (theme) query = query.contains("themes", [theme]);
+    if (difficultyMin) query = query.gte("difficulty_rating", parseInt(difficultyMin));
+    if (difficultyMax) query = query.lte("difficulty_rating", parseInt(difficultyMax));
     if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
 
     const { data, error } = await query;
