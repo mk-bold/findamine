@@ -56,6 +56,12 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
   const [primerTitle, setPrimerTitle] = useState("");
   const [primerText, setPrimerText] = useState("");
 
+  // AI generation
+  const [generatingClue, setGeneratingClue] = useState(false);
+  const [generatingModule, setGeneratingModule] = useState(false);
+  const [lessonPlanInput, setLessonPlanInput] = useState("");
+  const [showLessonPlan, setShowLessonPlan] = useState(false);
+
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
       setError("GPS not available on this device");
@@ -69,6 +75,72 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
       () => setError("Could not get your location. Check GPS permissions."),
       { enableHighAccuracy: true }
     );
+  };
+
+  const handleGenerateClue = async () => {
+    setGeneratingClue(true);
+    setError("");
+    try {
+      const res = await fetch("/api/v1/ai/generate-clue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          primer_content: primerText ? { text: primerText } : null,
+          task_content: question ? { question } : null,
+          location_name: locationName || undefined,
+          difficulty_tier: "medium",
+        }),
+      });
+      const data = await res.json();
+      if (data.clue_text) setClueText(data.clue_text);
+    } catch {
+      setError("Failed to generate clue");
+    } finally {
+      setGeneratingClue(false);
+    }
+  };
+
+  const handleGenerateFromLessonPlan = async () => {
+    if (!lessonPlanInput.trim()) return setError("Enter a lesson plan or topic");
+    setGeneratingModule(true);
+    setError("");
+    try {
+      const res = await fetch("/api/v1/ai/generate-module", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: lessonPlanInput.slice(0, 100),
+          lesson_plan_text: lessonPlanInput,
+          challenge_type: challengeType,
+        }),
+      });
+      const data = await res.json();
+      if (data.primer) {
+        setPrimerTitle(data.primer.title || "");
+        const pc = data.primer.content;
+        setPrimerText(typeof pc === "object" ? (pc.text || JSON.stringify(pc)) : String(pc));
+      }
+      if (data.task) {
+        setTaskTitle(data.task.title || "");
+        const tc = data.task.content;
+        if (tc?.question) setQuestion(tc.question);
+        if (tc?.options && challengeType === "multiple_choice") {
+          setOptions(tc.options);
+          if (tc.correct_answer) setCorrectAnswer(tc.correct_answer);
+        }
+        if (tc?.items && challengeType === "sorting_ordering") {
+          setSortingItems(tc.items);
+        }
+        if (tc?.correct_answer && !["multiple_choice", "sorting_ordering"].includes(challengeType)) {
+          setCorrectAnswer(tc.correct_answer);
+        }
+      }
+      setShowLessonPlan(false);
+    } catch {
+      setError("Failed to generate from lesson plan");
+    } finally {
+      setGeneratingModule(false);
+    }
   };
 
   const handleSave = async () => {
@@ -266,6 +338,14 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
           rows={2}
           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
+        <button
+          type="button"
+          onClick={handleGenerateClue}
+          disabled={generatingClue}
+          className="mt-2 text-xs text-violet-600 hover:underline disabled:opacity-50"
+        >
+          {generatingClue ? "Generating..." : "Generate clue with AI"}
+        </button>
       </fieldset>
 
       {/* ── Curriculum Library Browser ── */}
@@ -298,16 +378,46 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
       <fieldset className="mb-5">
         <legend className="text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
           <span>Challenge</span>
-          {!showLibrary && (
+          <span className="flex gap-3">
+            {!showLibrary && (
+              <button
+                type="button"
+                onClick={() => setShowLibrary(true)}
+                className="text-xs text-sky-600 hover:underline font-normal"
+              >
+                Browse Library
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setShowLibrary(true)}
-              className="text-xs text-sky-600 hover:underline font-normal"
+              onClick={() => setShowLessonPlan(!showLessonPlan)}
+              className="text-xs text-violet-600 hover:underline font-normal"
             >
-              Browse Library ({libraryTaskId ? "change" : "200+ tasks"})
+              {showLessonPlan ? "Hide" : "Generate from Lesson Plan"}
             </button>
-          )}
+          </span>
         </legend>
+        {showLessonPlan && (
+          <div className="rounded-lg bg-violet-50 border border-violet-200 p-4 mb-3">
+            <p className="text-xs text-violet-700 mb-2">Paste a lesson plan, topic description, or learning objectives and AI will generate a primer + challenge:</p>
+            <textarea
+              value={lessonPlanInput}
+              onChange={(e) => setLessonPlanInput(e.target.value)}
+              placeholder="e.g. Students will learn about the water cycle including evaporation, condensation, and precipitation. They should be able to identify examples of each stage in their environment..."
+              rows={4}
+              className="block w-full rounded-md border border-violet-300 px-3 py-2 text-sm mb-2 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            />
+            <button
+              type="button"
+              onClick={handleGenerateFromLessonPlan}
+              disabled={generatingModule}
+              className="rounded-md bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+            >
+              {generatingModule ? "Generating..." : "Generate Primer + Challenge"}
+            </button>
+          </div>
+        )}
+
         {libraryTaskId && (
           <div className="rounded-md bg-sky-50 border border-sky-200 px-3 py-2 mb-3 flex items-center justify-between">
             <span className="text-xs text-sky-700">Using library task: <strong>{taskTitle}</strong></span>
