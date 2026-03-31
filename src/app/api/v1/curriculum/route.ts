@@ -22,10 +22,48 @@ export async function GET(request: NextRequest) {
     const theme = searchParams.get("theme");
     const difficultyMin = searchParams.get("difficulty_min");
     const difficultyMax = searchParams.get("difficulty_max");
-    const type = searchParams.get("type") || "tasks"; // tasks or primers
+    const standardCode = searchParams.get("standard"); // filter by education standard code
+    const frameworkCode = searchParams.get("framework"); // filter by framework code
+    const type = searchParams.get("type") || "tasks"; // tasks, primers, standards, or frameworks
     const limit = parseInt(searchParams.get("limit") || "50");
 
     const supabase = await createSupabaseServiceClient();
+
+    // ── Frameworks listing ──
+    if (type === "frameworks") {
+      const { data, error } = await supabase
+        .from("standard_frameworks")
+        .select("*")
+        .order("sort_order")
+        .limit(limit);
+      if (error) throw new ApiError(500, error.message);
+      return Response.json({ frameworks: data || [] });
+    }
+
+    // ── Standards listing ──
+    if (type === "standards") {
+      let sQuery = supabase
+        .from("education_standards")
+        .select("*, standard_frameworks(code, name, abbreviation)")
+        .order("sort_order")
+        .limit(limit);
+
+      if (frameworkCode) {
+        const { data: fw } = await supabase
+          .from("standard_frameworks")
+          .select("id")
+          .eq("code", frameworkCode)
+          .single();
+        if (fw) sQuery = sQuery.eq("framework_id", fw.id);
+      }
+      if (gradeMin) sQuery = sQuery.gte("grade_range_max", parseInt(gradeMin));
+      if (gradeMax) sQuery = sQuery.lte("grade_range_min", parseInt(gradeMax));
+      if (q) sQuery = sQuery.or(`code.ilike.%${q}%,description.ilike.%${q}%,domain.ilike.%${q}%`);
+
+      const { data, error } = await sQuery;
+      if (error) throw new ApiError(500, error.message);
+      return Response.json({ standards: data || [] });
+    }
 
     if (type === "primers") {
       let query = supabase
@@ -48,6 +86,33 @@ export async function GET(request: NextRequest) {
       const { data, error } = await query;
       if (error) throw new ApiError(500, error.message);
       return Response.json({ primers: data || [] });
+    }
+
+    // If filtering by standard, query through the alignment table
+    if (standardCode) {
+      const { data: std } = await supabase
+        .from("education_standards")
+        .select("id")
+        .eq("code", standardCode)
+        .maybeSingle();
+
+      if (!std) {
+        return Response.json({ tasks: [], standard_not_found: true });
+      }
+
+      const { data: alignments } = await supabase
+        .from("task_standard_alignments")
+        .select("task_id, alignment_strength, tasks(*)")
+        .eq("standard_id", std.id)
+        .limit(limit);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tasks = (alignments || []).map((a: any) => {
+        const taskData = Array.isArray(a.tasks) ? a.tasks[0] : a.tasks;
+        return { ...taskData, alignment_strength: a.alignment_strength };
+      });
+
+      return Response.json({ tasks, standard: standardCode });
     }
 
     // Tasks (default)
