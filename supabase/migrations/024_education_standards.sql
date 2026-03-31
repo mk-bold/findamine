@@ -14,7 +14,13 @@
 DROP TABLE IF EXISTS public.primer_standard_alignments CASCADE;
 DROP TABLE IF EXISTS public.task_standard_alignments CASCADE;
 DROP TABLE IF EXISTS public.education_standards CASCADE;
+DROP TABLE IF EXISTS public.standards CASCADE;  -- old table name from initial schema
 DROP TABLE IF EXISTS public.standard_frameworks CASCADE;
+-- Drop any leftover indexes from old schema
+DROP INDEX IF EXISTS public.idx_standards_framework;
+DROP INDEX IF EXISTS public.idx_standards_code;
+DROP INDEX IF EXISTS public.idx_standards_grade;
+DROP INDEX IF EXISTS public.idx_standards_domain;
 
 CREATE TABLE public.standard_frameworks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -55,10 +61,10 @@ CREATE TABLE public.education_standards (
   UNIQUE(framework_id, code)
 );
 
-CREATE INDEX idx_standards_framework ON public.education_standards(framework_id);
-CREATE INDEX idx_standards_code ON public.education_standards(code);
-CREATE INDEX idx_standards_grade ON public.education_standards(grade_range_min, grade_range_max);
-CREATE INDEX idx_standards_domain ON public.education_standards(domain);
+CREATE INDEX IF NOT EXISTS idx_standards_framework ON public.education_standards(framework_id);
+CREATE INDEX IF NOT EXISTS idx_standards_code ON public.education_standards(code);
+CREATE INDEX IF NOT EXISTS idx_standards_grade ON public.education_standards(grade_range_min, grade_range_max);
+CREATE INDEX IF NOT EXISTS idx_standards_domain ON public.education_standards(domain);
 
 ALTER TABLE public.education_standards ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "standards_select_all" ON public.education_standards FOR SELECT USING (true);
@@ -76,8 +82,8 @@ CREATE TABLE public.task_standard_alignments (
   UNIQUE(task_id, standard_id)
 );
 
-CREATE INDEX idx_task_alignments_task ON public.task_standard_alignments(task_id);
-CREATE INDEX idx_task_alignments_standard ON public.task_standard_alignments(standard_id);
+CREATE INDEX IF NOT EXISTS idx_task_alignments_task ON public.task_standard_alignments(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_alignments_standard ON public.task_standard_alignments(standard_id);
 
 ALTER TABLE public.task_standard_alignments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "task_alignments_select_all" ON public.task_standard_alignments FOR SELECT USING (true);
@@ -97,8 +103,8 @@ CREATE TABLE public.primer_standard_alignments (
   UNIQUE(primer_id, standard_id)
 );
 
-CREATE INDEX idx_primer_alignments_primer ON public.primer_standard_alignments(primer_id);
-CREATE INDEX idx_primer_alignments_standard ON public.primer_standard_alignments(standard_id);
+CREATE INDEX IF NOT EXISTS idx_primer_alignments_primer ON public.primer_standard_alignments(primer_id);
+CREATE INDEX IF NOT EXISTS idx_primer_alignments_standard ON public.primer_standard_alignments(standard_id);
 
 ALTER TABLE public.primer_standard_alignments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "primer_alignments_select_all" ON public.primer_standard_alignments FOR SELECT USING (true);
