@@ -3,6 +3,14 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { aiLimiter } from "@/lib/utils/rate-limit";
 import { generateModule } from "@/lib/services/findbot";
+import {
+  VALID_SUBJECTS, VALID_GRADE_BANDS, VALID_CHALLENGE_TYPES,
+  VALID_DIFFICULTY_TIERS, VALID_LOCATION_TYPES,
+  validateEnum, sanitizeForPrompt, clampInt,
+} from "@/lib/utils/ai-validation";
+
+const MAX_LESSON_PLAN = 10000;
+const MAX_TOPIC = 200;
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,24 +19,26 @@ export async function POST(request: NextRequest) {
     requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
-    const {
-      subject,
-      grade_band = "3-5",
-      challenge_type = "multiple_choice",
-      difficulty_tier = "medium",
-      location_type = "any",
-      topic,
-      tags,
-      lesson_plan_text,
-      save_to_library = false,
-    } = body;
+
+    // Validate inputs
+    const subject = validateEnum(body.subject, VALID_SUBJECTS, "subject", "science_nature");
+    const grade_band = validateEnum(body.grade_band, VALID_GRADE_BANDS, "grade_band", "3-5");
+    const challenge_type = validateEnum(body.challenge_type, VALID_CHALLENGE_TYPES, "challenge_type", "multiple_choice");
+    const difficulty_tier = validateEnum(body.difficulty_tier, VALID_DIFFICULTY_TIERS, "difficulty_tier", "medium");
+    const location_type = validateEnum(body.location_type, VALID_LOCATION_TYPES, "location_type", "any");
+    const topic = sanitizeForPrompt(body.topic, MAX_TOPIC);
+    const lesson_plan_text = typeof body.lesson_plan_text === "string"
+      ? body.lesson_plan_text.slice(0, MAX_LESSON_PLAN)
+      : undefined;
+    const tags = Array.isArray(body.tags) ? body.tags.filter((t: unknown) => typeof t === "string").slice(0, 20) : undefined;
+    const save_to_library = body.save_to_library === true;
 
     if (!topic && !lesson_plan_text) {
       throw new ApiError(400, "Either topic or lesson_plan_text is required");
     }
 
     const result = await generateModule({
-      subject: subject || "science_nature",
+      subject,
       gradeBand: grade_band,
       challengeType: challenge_type,
       difficultyTier: difficulty_tier,
@@ -38,8 +48,13 @@ export async function POST(request: NextRequest) {
       lessonPlanText: lesson_plan_text,
     });
 
-    // Optionally save to database as draft library items
     if (save_to_library) {
+      // Only admin and researcher can save to shared library
+      // Teachers can generate but must request library addition
+      if (!["admin", "researcher"].includes(user.role)) {
+        throw new ApiError(403, "Only admins and researchers can add content to the shared library. Content has been generated but not saved.");
+      }
+
       const supabase = await createSupabaseServiceClient();
 
       const gradeMap: Record<string, { min: number; max: number }> = {
@@ -52,12 +67,19 @@ export async function POST(request: NextRequest) {
       const difficultyMap: Record<string, number> = { easy: 3, medium: 5, hard: 8 };
       const difficultyRating = difficultyMap[difficulty_tier] || 5;
 
+      // Validate generated content before saving
+      const primerTitle = (result.primer?.title || "").slice(0, 500);
+      const taskTitle = (result.task?.title || "").slice(0, 500);
+      if (!primerTitle || !taskTitle) {
+        throw new ApiError(500, "AI generated invalid content — please try again");
+      }
+
       const { data: primer } = await supabase
         .from("primers")
         .insert({
-          title: result.primer.title,
+          title: primerTitle,
           content: result.primer.content,
-          subject_domain: subject || "science_nature",
+          subject_domain: subject,
           grade_range_min: gradeRange.min,
           grade_range_max: gradeRange.max,
           is_library: true,
@@ -74,8 +96,8 @@ export async function POST(request: NextRequest) {
       const { data: task } = await supabase
         .from("tasks")
         .insert({
-          title: result.task.title,
-          subject_domain: subject || "science_nature",
+          title: taskTitle,
+          subject_domain: subject,
           challenge_type,
           content: result.task.content,
           grade_range_min: gradeRange.min,

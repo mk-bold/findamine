@@ -402,11 +402,13 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
             <p className="text-xs text-violet-700 mb-2">Paste a lesson plan, topic description, or learning objectives and AI will generate a primer + challenge:</p>
             <textarea
               value={lessonPlanInput}
-              onChange={(e) => setLessonPlanInput(e.target.value)}
+              onChange={(e) => setLessonPlanInput(e.target.value.slice(0, 5000))}
+              maxLength={5000}
               placeholder="e.g. Students will learn about the water cycle including evaporation, condensation, and precipitation. They should be able to identify examples of each stage in their environment..."
               rows={4}
               className="block w-full rounded-md border border-violet-300 px-3 py-2 text-sm mb-2 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
+            <p className="text-xs text-violet-400 mb-2">{lessonPlanInput.length}/5000</p>
             <button
               type="button"
               onClick={handleGenerateFromLessonPlan}

@@ -17,8 +17,9 @@ export async function GET(request: NextRequest) {
     const locationType = searchParams.get("location_type");
     const locationDep = searchParams.get("location_dependency");
     const challengeType = searchParams.get("challenge_type");
-    const q = searchParams.get("q");
-    const tag = searchParams.get("tag");
+    const rawQ = searchParams.get("q");
+    const q = rawQ ? rawQ.slice(0, 100).replace(/%/g, "\\%").replace(/_/g, "\\_") : null;
+    const tag = searchParams.get("tag")?.slice(0, 50) || null;
     const theme = searchParams.get("theme");
     const difficultyMin = searchParams.get("difficulty_min");
     const difficultyMax = searchParams.get("difficulty_max");

@@ -3,6 +3,10 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { aiLimiter } from "@/lib/utils/rate-limit";
 import { recommendHunt } from "@/lib/services/findbot";
+import {
+  VALID_SUBJECTS, VALID_GRADE_BANDS, VALID_LOCATION_TYPES,
+  VALID_DIFFICULTY_PROGRESSIONS, validateEnum, clampInt, sanitizeForPrompt,
+} from "@/lib/utils/ai-validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,16 +15,19 @@ export async function POST(request: NextRequest) {
     requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
-    const {
-      subject_domains = ["science_nature"],
-      grade_band = "3-5",
-      target_audience = "kids",
-      location_type = "any",
-      target_duration_min = 40,
-      difficulty_progression = "ascending",
-      num_stops = 5,
-      theme,
-    } = body;
+
+    // Validate inputs
+    const rawSubjects = Array.isArray(body.subject_domains) ? body.subject_domains.slice(0, 6) : ["science_nature"];
+    const subject_domains = rawSubjects.filter((s: string) => VALID_SUBJECTS.includes(s as typeof VALID_SUBJECTS[number]));
+    if (subject_domains.length === 0) subject_domains.push("science_nature");
+
+    const grade_band = validateEnum(body.grade_band, VALID_GRADE_BANDS, "grade_band", "3-5");
+    const target_audience = validateEnum(body.target_audience, ["kids", "teens", "adults", "family", "all"] as const, "target_audience", "kids");
+    const location_type = validateEnum(body.location_type, VALID_LOCATION_TYPES, "location_type", "any");
+    const difficulty_progression = validateEnum(body.difficulty_progression, VALID_DIFFICULTY_PROGRESSIONS, "difficulty_progression", "ascending");
+    const target_duration_min = clampInt(body.target_duration_min, 10, 180, 40);
+    const num_stops = clampInt(body.num_stops, 2, 10, 5);
+    const theme = sanitizeForPrompt(body.theme, 200) || undefined;
 
     const supabase = await createSupabaseServiceClient();
 

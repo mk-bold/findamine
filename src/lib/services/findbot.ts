@@ -82,11 +82,11 @@ export async function generateHint(params: {
     4: "Give the structure of the answer with one key piece missing. The learner only needs to fill in one detail.",
   };
 
-  const prompt = `The learner is at "${locationName || "a location"}" solving this challenge:
-Title: ${taskTitle}
-${clueText ? `Clue: ${clueText}` : ""}
-Challenge type: ${taskContent.challenge_type || "unknown"}
-${previousAttempts?.length ? `Their previous attempts: ${previousAttempts.join(", ")}` : ""}
+  const prompt = `The learner is at "${sanitizeForPrompt(locationName, 200)}" solving this challenge:
+Title: ${sanitizeForPrompt(taskTitle, 200)}
+${clueText ? `Clue: ${sanitizeForPrompt(clueText, 300)}` : ""}
+Challenge type: ${sanitizeForPrompt(String(taskContent.challenge_type || "unknown"), 50)}
+${previousAttempts?.length ? `Their previous attempts: ${previousAttempts.map(a => sanitizeForPrompt(a, 100)).join(", ")}` : ""}
 
 Generate a Level ${hintLevel} hint. ${levelInstructions[hintLevel]}
 
@@ -124,7 +124,7 @@ export async function generateFeedback(params: {
 
   const resultType = isCorrect ? "correct" : partialCredit ? "partially correct" : "incorrect";
 
-  const prompt = `The learner just answered "${answer}" for the challenge "${taskTitle}".
+  const prompt = `The learner just answered "${sanitizeForPrompt(answer, 500)}" for the challenge "${sanitizeForPrompt(taskTitle, 200)}".
 Result: ${resultType}
 Attempt number: ${attemptNumber}
 Hints used: ${hintsUsed}
@@ -177,20 +177,24 @@ export async function generateContent(params: {
 }): Promise<string> {
   const { contentType, locationName, subjectDomain, gradeRange, existingContent, ageBand } = params;
 
+  const safeLoc = sanitizeForPrompt(locationName, 200);
+  const safeDomain = sanitizeForPrompt(subjectDomain, 50);
+  const safeExisting = sanitizeForPrompt(existingContent, 500);
+
   const prompts: Record<string, string> = {
-    clue: `Create a fun, age-appropriate clue that leads learners to "${locationName || "a location"}".
-Subject: ${subjectDomain || "general"}. Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 5}.
-${existingContent ? `Improve this existing clue: "${existingContent}"` : "Write a new clue."}
+    clue: `Create a fun, age-appropriate clue that leads learners to "${safeLoc || "a location"}".
+Subject: ${safeDomain || "general"}. Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 5}.
+${safeExisting ? `Improve this existing clue: "${safeExisting}"` : "Write a new clue."}
 The clue should be intriguing and encourage exploration. 2-3 sentences max.`,
 
-    task: `Create a challenge question for learners at "${locationName || "a location"}".
-Subject: ${subjectDomain || "general"}. Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 5}.
-${existingContent ? `Improve this existing challenge: "${existingContent}"` : "Write a new challenge."}
+    task: `Create a challenge question for learners at "${safeLoc || "a location"}".
+Subject: ${safeDomain || "general"}. Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 5}.
+${safeExisting ? `Improve this existing challenge: "${safeExisting}"` : "Write a new challenge."}
 Include the question and the correct answer. Format as JSON: {"question": "...", "correct_answer": "...", "hint": "..."}`,
 
-    primer: `Create a brief educational primer (concept review) for the topic "${subjectDomain || "general exploration"}".
+    primer: `Create a brief educational primer (concept review) for the topic "${safeDomain || "general exploration"}".
 Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 5}.
-${existingContent ? `Improve this existing primer: "${existingContent}"` : "Write a new primer."}
+${safeExisting ? `Improve this existing primer: "${safeExisting}"` : "Write a new primer."}
 Keep it to 2-3 sentences. Make it engaging and informative.`,
   };
 
@@ -212,6 +216,7 @@ Keep it to 2-3 sentences. Make it engaging and informative.`,
 // ── AI Orchestration (GPT-4o-mini for cost efficiency) ─────────
 
 import OpenAI from "openai";
+import { sanitizeForPrompt } from "@/lib/utils/ai-validation";
 
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -241,7 +246,7 @@ export async function generateClueWithHints(params: {
   const prompt = `Generate a clue and 3 progressive hints for a GPS scavenger hunt stop.
 
 Context:
-- Location: "${locationName || "a location"}" (type: ${locationType || "any"})
+- Location: "${sanitizeForPrompt(locationName, 200)}" (type: ${sanitizeForPrompt(locationType, 30)})
 - Primer teaches: ${JSON.stringify(primerContent).slice(0, 500)}
 - Challenge asks: ${(taskContent as { question?: string }).question || JSON.stringify(taskContent).slice(0, 300)}
 - Grade range: ${gradeRange?.min || 3}-${gradeRange?.max || 8}

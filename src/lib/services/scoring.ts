@@ -90,8 +90,8 @@ export function calculateScore(
   }
 
   // Hint penalty (split: clue hints cost less than challenge hints)
-  const clueHints = input.clueHintsUsed ?? 0;
-  const challengeHints = input.challengeHintsUsed ?? input.hintsUsed ?? 0;
+  const clueHints = Math.max(0, Math.floor(input.clueHintsUsed ?? 0));
+  const challengeHints = Math.max(0, Math.floor(input.challengeHintsUsed ?? input.hintsUsed ?? 0));
   const hintPenalty =
     clueHints * config.clueHintPenalty +
     challengeHints * config.challengeHintPenalty;

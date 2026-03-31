@@ -3,6 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { aiLimiter } from "@/lib/utils/rate-limit";
 import { suggestPairings } from "@/lib/services/findbot";
+import { VALID_SUBJECTS, VALID_LOCATION_TYPES, validateEnum, clampInt } from "@/lib/utils/ai-validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +12,9 @@ export async function POST(request: NextRequest) {
     requireRole(user, "teacher", "hunt_creator", "admin", "researcher");
 
     const body = await request.json();
-    const { subject, grade_band, location_type, count = 5 } = body;
+    const subject = body.subject ? validateEnum(body.subject, VALID_SUBJECTS, "subject", "science_nature") : undefined;
+    const location_type = body.location_type ? validateEnum(body.location_type, VALID_LOCATION_TYPES, "location_type", "any") : undefined;
+    const count = clampInt(body.count, 1, 20, 5);
 
     const supabase = await createSupabaseServiceClient();
 
