@@ -11,6 +11,7 @@ interface FindEditorProps {
   huntId: string;
   onSaved: () => void;
   onCancel: () => void;
+  experimentCondition?: string; // "control" | "scaffolding" | "feedback" | "full"
 }
 
 const CHALLENGE_TYPES = [
@@ -28,7 +29,9 @@ const CHALLENGE_TYPES = [
  * Form to create a new find (stop) within a hunt.
  * Creates location + task + find in sequence via API calls.
  */
-export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProps) {
+export default function FindEditor({ huntId, onSaved, onCancel, experimentCondition }: FindEditorProps) {
+  // Experiment: scaffolding features only show for scaffolding/full conditions
+  const showScaffolding = !experimentCondition || experimentCondition === "scaffolding" || experimentCondition === "full";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showLibrary, setShowLibrary] = useState(false);
@@ -394,13 +397,23 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
                 Browse Library
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => { setShowAiPrompts(!showAiPrompts); setShowLessonPlan(false); }}
-              className="text-xs text-violet-600 hover:underline font-normal"
-            >
-              {showAiPrompts ? "Hide AI" : "AI-Assisted Creation"}
-            </button>
+            {showScaffolding ? (
+              <button
+                type="button"
+                onClick={() => { setShowAiPrompts(!showAiPrompts); setShowLessonPlan(false); }}
+                className="text-xs text-violet-600 hover:underline font-normal"
+              >
+                {showAiPrompts ? "Hide AI" : "AI-Assisted Creation"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowLessonPlan(!showLessonPlan)}
+                className="text-xs text-violet-600 hover:underline font-normal"
+              >
+                {showLessonPlan ? "Hide" : "Generate with AI"}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowStandards(!showStandards)}
@@ -426,7 +439,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
 
         {showLessonPlan && (
           <div className="rounded-lg bg-violet-50 border border-violet-200 p-4 mb-3">
-            {currentAiMode && (
+            {showScaffolding && currentAiMode && (
               <div className="mb-2">
                 <AiModeIndicator mode={currentAiMode} compact />
               </div>
@@ -435,7 +448,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
               value={lessonPlanInput}
               onChange={(e) => {
                 setLessonPlanInput(e.target.value.slice(0, 5000));
-                setCurrentAiMode(detectMode(e.target.value));
+                if (showScaffolding) setCurrentAiMode(detectMode(e.target.value));
               }}
               maxLength={5000}
               placeholder="Describe what you want to teach, paste a lesson plan, or ask AI to help you improve your draft..."
