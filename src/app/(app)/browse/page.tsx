@@ -56,6 +56,12 @@ export default async function BrowseHuntsPage({
       </div>
 
       <div className="mx-auto max-w-4xl px-4">
+      <div className="flex items-center justify-between mb-3">
+        <div />
+        <Link href="/browse/standards" className="text-xs text-sky-600 hover:underline">
+          Browse by Standard →
+        </Link>
+      </div>
       <form className="flex gap-2 mb-4">
         <input
           name="q"

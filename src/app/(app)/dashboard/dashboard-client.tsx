@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import InsightsPanel from "@/components/hunts/insights-panel";
 
 interface DashboardUser {
   id: string;
@@ -70,6 +71,13 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
           href="/dashboard/social"
         />
       </div>
+
+      {/* Hunt creator insights */}
+      {["teacher", "hunt_creator", "admin", "researcher"].includes(user.role) && (
+        <div className="mt-6">
+          <InsightsPanel />
+        </div>
+      )}
     </main>
   );
 }

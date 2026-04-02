@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Leaderboard from "@/components/social/leaderboard";
+import HuntAnalytics from "@/components/hunts/hunt-analytics";
 
 export default async function HuntDetailPage({
   params,
@@ -88,8 +89,11 @@ export default async function HuntDetailPage({
         Start Hunt
       </Link>
 
+      {/* Hunt performance analytics */}
+      <HuntAnalytics huntId={hunt.id} />
+
       {/* Live leaderboard for this hunt */}
-      <div className="mt-8">
+      <div className="mt-4">
         <Leaderboard huntId={hunt.id} />
       </div>
     </main>
