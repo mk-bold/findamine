@@ -114,7 +114,7 @@ export default function HuntDetailPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-6">
+      <main className="mx-auto max-w-4xl px-4 py-4">
         <div className="animate-pulse space-y-4">
           <div className="h-5 bg-gray-200 rounded w-1/4" />
           <div className="h-8 bg-gray-200 rounded w-1/2" />
@@ -136,7 +136,7 @@ export default function HuntDetailPage() {
   const finds = hunt.finds || [];
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <Link href="/dashboard/hunts" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; My Hunts
       </Link>

@@ -28,12 +28,10 @@ export default async function BrowseHuntsPage({
   const { data: hunts } = await query;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-semibold text-gray-900">Browse Hunts</h1>
-      </div>
+    <main className="mx-auto max-w-4xl px-4 py-4">
+      <h1 className="text-base font-semibold text-gray-900 mb-3">Browse Hunts</h1>
 
-      <form className="flex gap-3 mb-5">
+      <form className="flex gap-2 mb-4">
         <input
           name="q"
           type="search"
@@ -65,24 +63,24 @@ export default async function BrowseHuntsPage({
           No hunts found. {params.q && "Try a different search term."}
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {hunts.map((hunt) => (
             <Link
               key={hunt.id}
               href={`/browse/${hunt.id}`}
-              className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-sky-200 hover:shadow-sm transition-all"
+              className="block rounded-lg border border-gray-200 bg-white p-3.5 hover:border-sky-200 hover:shadow-sm transition-all"
             >
-              <h3 className="font-semibold text-gray-900 mb-1">{hunt.title}</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{hunt.title}</h3>
               {hunt.description && (
-                <p className="text-sm text-gray-500 line-clamp-2 mb-3">{hunt.description}</p>
+                <p className="text-xs text-gray-500 line-clamp-2 mb-2">{hunt.description}</p>
               )}
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-700">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 text-[11px]">
                   {hunt.target_audience}
                 </span>
-                <span>{hunt.play_mode.replace(/_/g, " ")}</span>
+                <span className="text-[11px]">{hunt.play_mode.replace(/_/g, " ")}</span>
                 {hunt.estimated_duration_min && (
-                  <span>{hunt.estimated_duration_min} min</span>
+                  <span className="text-[11px]">{hunt.estimated_duration_min} min</span>
                 )}
               </div>
             </Link>

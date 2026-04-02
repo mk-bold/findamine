@@ -40,8 +40,8 @@ export default function SettingsPage() {
   if (!user) return <main className="mx-auto max-w-2xl px-4 py-12 text-center text-gray-500">Loading...</main>;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
-      <h1 className="text-lg font-semibold text-gray-900 mb-4">Settings</h1>
+    <main className="mx-auto max-w-2xl px-4 py-4">
+      <h1 className="text-base font-semibold text-gray-900 mb-4">Settings</h1>
 
       <form onSubmit={handleSave} className="space-y-5">
         <div>

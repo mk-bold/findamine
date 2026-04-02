@@ -43,13 +43,13 @@ export default function BadgesPage() {
   const categories = [...new Set(filtered.map((b) => b.category))].sort();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <Link href="/dashboard" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Dashboard
       </Link>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">My Badges</h1>
+          <h1 className="text-base font-semibold text-gray-900">My Badges</h1>
           <p className="text-sm text-gray-500">
             {earnedCount} of {badges.length} earned
           </p>

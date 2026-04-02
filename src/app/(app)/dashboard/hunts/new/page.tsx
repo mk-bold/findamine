@@ -192,7 +192,7 @@ export default function NewHuntPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-4 py-4">
       <h1 className="text-lg font-semibold text-gray-900 mb-4">Create New Hunt</h1>
 
       {/* Mode toggle */}

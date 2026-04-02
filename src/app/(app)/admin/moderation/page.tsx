@@ -39,7 +39,7 @@ export default function ModerationPage() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <Link href="/admin" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Admin
       </Link>

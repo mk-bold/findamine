@@ -66,11 +66,11 @@ export default function SocialPage() {
   const pendingFriends = friends.filter((f) => f.status === "pending");
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <Link href="/dashboard" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Dashboard
       </Link>
-      <h1 className="text-lg font-semibold text-gray-900 mb-6">Social</h1>
+      <h1 className="text-base font-semibold text-gray-900 mb-6">Social</h1>
 
       {loading ? (
         <div className="animate-pulse space-y-4">

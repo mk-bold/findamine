@@ -25,7 +25,7 @@ export default async function HuntDetailPage({
   );
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6">
+    <main className="mx-auto max-w-3xl px-4 py-4">
       <Link href="/browse" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Back to browse
       </Link>

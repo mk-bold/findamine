@@ -33,7 +33,7 @@ export default async function AdminPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <h1 className="text-lg font-semibold text-gray-900 mb-4">Admin Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">

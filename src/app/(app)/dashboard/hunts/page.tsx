@@ -24,9 +24,9 @@ export default async function MyHuntsPage() {
     .order("updated_at", { ascending: false });
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-lg font-semibold text-gray-900">My Hunts</h1>
+        <h1 className="text-base font-semibold text-gray-900">My Hunts</h1>
         <Link
           href="/dashboard/hunts/new"
           className="btn-primary px-4 py-2 text-sm font-medium"

@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "findamine - GPS Treasure Hunting Adventures",
   description:
     "Location-based educational scavenger hunts for classrooms and families.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({

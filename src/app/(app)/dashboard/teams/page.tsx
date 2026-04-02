@@ -38,11 +38,11 @@ export default function TeamsPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6">
+    <main className="mx-auto max-w-4xl px-4 py-4">
       <Link href="/dashboard" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
         &larr; Dashboard
       </Link>
-      <h1 className="text-lg font-semibold text-gray-900 mb-2">My Teams</h1>
+      <h1 className="text-base font-semibold text-gray-900 mb-2">My Teams</h1>
       <p className="text-sm text-gray-500 mb-6">Teams you belong to across all hunts.</p>
 
       {loading ? (
