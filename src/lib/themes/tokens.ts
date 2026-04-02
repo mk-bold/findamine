@@ -80,14 +80,14 @@ export const THEME_TOKENS: Record<AgeBand, ThemeTokens> = {
     lineHeight: "1.6",
     fontWeight: "600",
 
-    borderRadius: "16px",
-    borderRadiusLg: "24px",
-    touchTarget: "48px",
-    spacing: "16px",
-    cardPadding: "20px",
+    borderRadius: "12px",
+    borderRadiusLg: "16px",
+    touchTarget: "44px",
+    spacing: "12px",
+    cardPadding: "16px",
 
     navStyle: "bottom-tabs",
-    navIconSize: "28px",
+    navIconSize: "24px",
 
     animationDuration: "0.4s",
     animationStyle: "playful",
@@ -121,14 +121,14 @@ export const THEME_TOKENS: Record<AgeBand, ThemeTokens> = {
     lineHeight: "1.5",
     fontWeight: "500",
 
-    borderRadius: "12px",
-    borderRadiusLg: "16px",
-    touchTarget: "44px",
-    spacing: "14px",
-    cardPadding: "16px",
+    borderRadius: "8px",
+    borderRadiusLg: "12px",
+    touchTarget: "36px",
+    spacing: "10px",
+    cardPadding: "12px",
 
     navStyle: "tabs",
-    navIconSize: "24px",
+    navIconSize: "20px",
 
     animationDuration: "0.3s",
     animationStyle: "moderate",
@@ -162,14 +162,14 @@ export const THEME_TOKENS: Record<AgeBand, ThemeTokens> = {
     lineHeight: "1.5",
     fontWeight: "400",
 
-    borderRadius: "8px",
-    borderRadiusLg: "12px",
-    touchTarget: "40px",
-    spacing: "12px",
-    cardPadding: "16px",
+    borderRadius: "6px",
+    borderRadiusLg: "10px",
+    touchTarget: "36px",
+    spacing: "8px",
+    cardPadding: "12px",
 
     navStyle: "sidebar-tabs",
-    navIconSize: "20px",
+    navIconSize: "18px",
 
     animationDuration: "0.2s",
     animationStyle: "subtle",
@@ -205,12 +205,12 @@ export const THEME_TOKENS: Record<AgeBand, ThemeTokens> = {
 
     borderRadius: "6px",
     borderRadiusLg: "8px",
-    touchTarget: "36px",
-    spacing: "12px",
-    cardPadding: "16px",
+    touchTarget: "32px",
+    spacing: "8px",
+    cardPadding: "10px",
 
     navStyle: "sidebar",
-    navIconSize: "18px",
+    navIconSize: "16px",
 
     animationDuration: "0.15s",
     animationStyle: "minimal",
