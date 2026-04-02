@@ -1,12 +1,23 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
+const HERO_IMAGES = [
+  "/hero-public.png",
+  "/hero-family.png",
+  "/hero-class.png",
+  "/hero-adult.png",
+  "/hero-intermediate.png",
+  "/hero-teen.png",
+  "/hero-primary.png",
+];
+
 export default async function BrowseHuntsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; audience?: string }>;
 }) {
   const params = await searchParams;
+  const heroImage = HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)];
   const supabase = await createSupabaseServiceClient();
 
   let query = supabase
@@ -28,9 +39,23 @@ export default async function BrowseHuntsPage({
   const { data: hunts } = await query;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-4">
-      <h1 className="text-base font-semibold text-gray-900 mb-3">Browse Hunts</h1>
+    <main>
+      {/* Hero strip */}
+      <div
+        className="relative w-full h-16 sm:h-20 flex items-center justify-center overflow-hidden mb-4"
+        style={{
+          backgroundImage: `url(${heroImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+        <h1 className="relative text-white text-lg sm:text-xl font-semibold tracking-wide drop-shadow-md">
+          Browse Hunts
+        </h1>
+      </div>
 
+      <div className="mx-auto max-w-4xl px-4">
       <form className="flex gap-2 mb-4">
         <input
           name="q"
@@ -87,6 +112,7 @@ export default async function BrowseHuntsPage({
           ))}
         </div>
       )}
+      </div>
     </main>
   );
 }
