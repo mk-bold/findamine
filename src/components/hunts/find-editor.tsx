@@ -4,6 +4,8 @@ import { useState } from "react";
 import LocationPicker from "@/components/maps/location-picker";
 import CurriculumBrowser from "./curriculum-browser";
 import StandardsBrowser from "./standards-browser";
+import AiPromptTemplates from "./ai-prompt-templates";
+import AiModeIndicator, { detectMode, type AiMode } from "./ai-mode-indicator";
 
 interface FindEditorProps {
   huntId: string;
@@ -63,6 +65,8 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
   const [lessonPlanInput, setLessonPlanInput] = useState("");
   const [showLessonPlan, setShowLessonPlan] = useState(false);
   const [showStandards, setShowStandards] = useState(false);
+  const [showAiPrompts, setShowAiPrompts] = useState(false);
+  const [currentAiMode, setCurrentAiMode] = useState<AiMode | null>(null);
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
@@ -392,10 +396,10 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
             )}
             <button
               type="button"
-              onClick={() => setShowLessonPlan(!showLessonPlan)}
+              onClick={() => { setShowAiPrompts(!showAiPrompts); setShowLessonPlan(false); }}
               className="text-xs text-violet-600 hover:underline font-normal"
             >
-              {showLessonPlan ? "Hide" : "Generate from Lesson Plan"}
+              {showAiPrompts ? "Hide AI" : "AI-Assisted Creation"}
             </button>
             <button
               type="button"
@@ -406,26 +410,49 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
             </button>
           </span>
         </legend>
+        {showAiPrompts && (
+          <div className="mb-3">
+            <AiPromptTemplates
+              topic={taskTitle || primerTitle || ""}
+              onSelectPrompt={(prompt, mode) => {
+                setCurrentAiMode(mode);
+                setLessonPlanInput(prompt);
+                setShowAiPrompts(false);
+                setShowLessonPlan(true);
+              }}
+            />
+          </div>
+        )}
+
         {showLessonPlan && (
           <div className="rounded-lg bg-violet-50 border border-violet-200 p-4 mb-3">
-            <p className="text-xs text-violet-700 mb-2">Paste a lesson plan, topic description, or learning objectives and AI will generate a primer + challenge:</p>
+            {currentAiMode && (
+              <div className="mb-2">
+                <AiModeIndicator mode={currentAiMode} compact />
+              </div>
+            )}
             <textarea
               value={lessonPlanInput}
-              onChange={(e) => setLessonPlanInput(e.target.value.slice(0, 5000))}
+              onChange={(e) => {
+                setLessonPlanInput(e.target.value.slice(0, 5000));
+                setCurrentAiMode(detectMode(e.target.value));
+              }}
               maxLength={5000}
-              placeholder="e.g. Students will learn about the water cycle including evaporation, condensation, and precipitation. They should be able to identify examples of each stage in their environment..."
+              placeholder="Describe what you want to teach, paste a lesson plan, or ask AI to help you improve your draft..."
               rows={4}
               className="block w-full rounded-md border border-violet-300 px-3 py-2 text-sm mb-2 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
-            <p className="text-xs text-violet-400 mb-2">{lessonPlanInput.length}/5000</p>
-            <button
-              type="button"
-              onClick={handleGenerateFromLessonPlan}
-              disabled={generatingModule}
-              className="rounded-md bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              {generatingModule ? "Generating..." : "Generate Primer + Challenge"}
-            </button>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-violet-400">{lessonPlanInput.length}/5000</p>
+              <button
+                type="button"
+                onClick={handleGenerateFromLessonPlan}
+                disabled={generatingModule}
+                className="rounded-md bg-violet-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {generatingModule ? "Generating..." : "Generate with AI"}
+              </button>
+            </div>
           </div>
         )}
 
