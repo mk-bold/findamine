@@ -35,15 +35,25 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // Check if user has seen onboarding
+    // Check localStorage first (fast), then API (authoritative)
+    if (localStorage.getItem("onboarding_complete") === "true") return;
+
     async function check() {
-      const res = await fetch("/api/v1/onboarding");
-      if (res.ok) {
-        const data = await res.json();
-        const completed = (data.milestones || []).some(
-          (m: { milestone_type: string }) => m.milestone_type === "onboarding_complete"
-        );
-        if (!completed) setShow(true);
+      try {
+        const res = await fetch("/api/v1/onboarding");
+        if (res.ok) {
+          const data = await res.json();
+          const completed = (data.milestones || []).some(
+            (m: { milestone_type: string }) => m.milestone_type === "onboarding_complete"
+          );
+          if (completed) {
+            localStorage.setItem("onboarding_complete", "true");
+          } else {
+            setShow(true);
+          }
+        }
+      } catch {
+        // If API fails, don't show onboarding (avoid blocking the UI)
       }
     }
     check();
@@ -51,11 +61,16 @@ export default function Onboarding() {
 
   const handleComplete = useCallback(async () => {
     setShow(false);
-    await fetch("/api/v1/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ milestone_type: "onboarding_complete" }),
-    });
+    localStorage.setItem("onboarding_complete", "true");
+    try {
+      await fetch("/api/v1/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ milestone_type: "onboarding_complete" }),
+      });
+    } catch {
+      // localStorage already set — dismiss works even if API fails
+    }
   }, []);
 
   const modalRef = useRef<HTMLDivElement>(null);

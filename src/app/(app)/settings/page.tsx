@@ -80,6 +80,21 @@ export default function SettingsPage() {
           {saving ? "Saving..." : "Save"}
         </button>
       </form>
+
+      <hr className="my-6 border-gray-200" />
+
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900 mb-2">Help</h2>
+        <button
+          onClick={() => {
+            localStorage.removeItem("onboarding_complete");
+            window.location.href = "/dashboard";
+          }}
+          className="text-sm text-sky-600 hover:underline"
+        >
+          Run welcome tutorial again
+        </button>
+      </div>
     </main>
   );
 }
