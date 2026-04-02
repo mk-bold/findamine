@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import FindEditor from "@/components/hunts/find-editor";
+import HuntCoverageReport from "@/components/hunts/hunt-coverage-report";
 
 interface HuntDetail {
   id: string;
@@ -309,6 +310,8 @@ export default function HuntDetailPage() {
             />
           </div>
         )}
+        {/* Coverage report */}
+        <HuntCoverageReport huntId={hunt.id} finds={finds} />
       </div>
     </main>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import LocationPicker from "@/components/maps/location-picker";
 import CurriculumBrowser from "./curriculum-browser";
+import StandardsBrowser from "./standards-browser";
 
 interface FindEditorProps {
   huntId: string;
@@ -61,6 +62,7 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
   const [generatingModule, setGeneratingModule] = useState(false);
   const [lessonPlanInput, setLessonPlanInput] = useState("");
   const [showLessonPlan, setShowLessonPlan] = useState(false);
+  const [showStandards, setShowStandards] = useState(false);
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
@@ -395,6 +397,13 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
             >
               {showLessonPlan ? "Hide" : "Generate from Lesson Plan"}
             </button>
+            <button
+              type="button"
+              onClick={() => setShowStandards(!showStandards)}
+              className="text-xs text-emerald-600 hover:underline font-normal"
+            >
+              {showStandards ? "Hide" : "Browse by Standard"}
+            </button>
           </span>
         </legend>
         {showLessonPlan && (
@@ -417,6 +426,20 @@ export default function FindEditor({ huntId, onSaved, onCancel }: FindEditorProp
             >
               {generatingModule ? "Generating..." : "Generate Primer + Challenge"}
             </button>
+          </div>
+        )}
+
+        {showStandards && (
+          <div className="mb-3">
+            <StandardsBrowser
+              onSelectTask={(task) => {
+                setLibraryTaskId(task.id);
+                setTaskTitle(task.title);
+                setChallengeType(task.challenge_type);
+                setShowStandards(false);
+              }}
+              onCancel={() => setShowStandards(false)}
+            />
           </div>
         )}
 
