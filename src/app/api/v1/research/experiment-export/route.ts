@@ -47,16 +47,23 @@ export async function GET(request: NextRequest) {
       userModes[uid][String(mode)] = (userModes[uid][String(mode)] || 0) + 1;
     }
 
-    // Build export rows
-    const rows = (users || []).map((u) => {
+    // Audit log: record who exported and when
+    console.log(JSON.stringify({
+      event: "experiment_export",
+      user_id: user.id,
+      role: user.role,
+      timestamp: new Date().toISOString(),
+    }));
+
+    // Build export rows — use anonymized IDs, condition joined from metadata
+    const rows = (users || []).map((u, idx) => {
       const condition = (u.metadata as Record<string, unknown>)?.experiment_condition || "unassigned";
       const modes = userModes[u.id] || {};
       const userHunts = (hunts || []).filter((h) => h.created_by === u.id);
       const publishedHunts = userHunts.filter((h) => h.status === "published");
 
       return {
-        user_id: u.id,
-        role: u.role,
+        participant_id: `P${String(idx + 1).padStart(4, "0")}`, // anonymized
         condition,
         registered_at: u.created_at,
         total_ai_interactions: Object.values(modes).reduce((a, b) => a + b, 0),

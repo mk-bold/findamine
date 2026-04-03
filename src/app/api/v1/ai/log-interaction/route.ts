@@ -1,13 +1,17 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 /**
  * Log an AI interaction event for the experiment.
  * Captures: mode used, prompt type, content generated, timing, edits.
+ * NOTE: Condition is NOT stored in event metadata to prevent
+ * participants from discovering their treatment assignment.
  */
 export async function POST(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 
@@ -23,20 +27,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createSupabaseServiceClient();
 
-    // Get user's experiment condition
-    const { data: userData } = await supabase
-      .from("users")
-      .select("metadata")
-      .eq("id", user.id)
-      .single();
-
-    const condition = userData?.metadata?.experiment_condition || "unassigned";
-
+    // Log event WITHOUT experiment condition (condition stored
+    // only in users.metadata, joined at export time for analysis)
     await supabase.from("app_events").insert({
       user_id: user.id,
       event_type: "ai_interaction",
       metadata: {
-        condition,
         mode_used: mode_used || null,
         prompt_template: prompt_template || null,
         content_type: content_type || null,

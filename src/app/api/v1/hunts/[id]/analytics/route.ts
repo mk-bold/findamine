@@ -12,6 +12,12 @@ export async function GET(
   try {
     await generalLimiter.check(request);
     const { id } = await params;
+
+    // Validate UUID format
+    if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      throw new ApiError(400, "Invalid hunt ID");
+    }
+
     const user = await getAuthUser(request);
     const supabase = await createSupabaseServiceClient();
 
