@@ -8,7 +8,7 @@ import ChallengeInput from "@/components/play/challenge-input";
 import NavigateMap from "@/components/maps/navigate-map";
 import { Celebration } from "@/components/ui/celebration";
 
-type StopStep = "prime" | "clue" | "navigate" | "challenge" | "capture" | "feedback";
+type StopStep = "prime" | "reading_check" | "clue" | "navigate" | "challenge" | "capture" | "feedback";
 
 interface Find {
   id: string;
@@ -16,6 +16,7 @@ interface Find {
   clue_text: string | null;
   hot_cold_enabled: boolean;
   scaffolding_level: string | null;
+  reading_check: { enabled: boolean; questions: { question: string; options: string[]; correct_answer: string }[] } | null;
   locations: { name: string; latitude: number; longitude: number; radius_meters: number } | null;
   tasks: { title: string; challenge_type: string; content: Record<string, unknown> } | null;
   primers: { title: string; content: Record<string, unknown> } | null;
@@ -71,6 +72,11 @@ export default function PlayPage() {
   const [arrived, setArrived] = useState(false);
   const [hintText, setHintText] = useState("");
   const [hintLevel, setHintLevel] = useState(0);
+  const [hintRated, setHintRated] = useState(false);
+  const [readingCheckAnswers, setReadingCheckAnswers] = useState<Record<number, string>>({});
+  const [readingCheckPassed, setReadingCheckPassed] = useState(false);
+  const [showTechniqueReview, setShowTechniqueReview] = useState(false);
+  const [techniqueReviewDone, setTechniqueReviewDone] = useState(false);
   const [clueHintText, setClueHintText] = useState("");
   const [clueHintLevel, setClueHintLevel] = useState(0);
   const [clueHintTotal, setClueHintTotal] = useState(0);
@@ -242,7 +248,14 @@ export default function PlayPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ find_id: currentFind.id }),
       });
-      setStep("clue");
+      // If reading check is enabled, go to reading_check step first
+      if (currentFind.reading_check?.enabled && currentFind.reading_check.questions?.length > 0) {
+        setReadingCheckAnswers({});
+        setReadingCheckPassed(false);
+        setStep("reading_check");
+      } else {
+        setStep("clue");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to record primer view");
     }
@@ -511,6 +524,56 @@ export default function PlayPage() {
           </div>
         )}
 
+        {/* ── READING CHECK ── */}
+        {step === "reading_check" && currentFind?.reading_check && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Comprehension Check</h2>
+            <p className="text-xs text-gray-500 mb-3">Answer these questions about the primer before continuing.</p>
+
+            <div className="space-y-3 mb-4">
+              {currentFind.reading_check.questions.map((q, qi) => (
+                <div key={qi} className="rounded-lg border border-gray-200 bg-white p-3">
+                  <p className="text-sm text-gray-900 mb-2">{qi + 1}. {q.question}</p>
+                  <div className="space-y-1">
+                    {q.options.map((opt, oi) => (
+                      <button
+                        key={oi}
+                        onClick={() => setReadingCheckAnswers({ ...readingCheckAnswers, [qi]: opt })}
+                        className={`w-full text-left rounded-md px-3 py-1.5 text-xs transition ${
+                          readingCheckAnswers[qi] === opt
+                            ? "bg-sky-100 border border-sky-300 text-sky-800"
+                            : "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                const questions = currentFind.reading_check!.questions;
+                const correct = questions.filter((q, i) => readingCheckAnswers[i] === q.correct_answer).length;
+                const pct = Math.round((correct / questions.length) * 100);
+                if (pct >= 75) {
+                  setReadingCheckPassed(true);
+                  setStep("clue");
+                } else {
+                  setError(`You got ${correct}/${questions.length} correct (${pct}%). Need 75% to continue. Try again!`);
+                  setReadingCheckAnswers({});
+                }
+              }}
+              disabled={Object.keys(readingCheckAnswers).length < (currentFind.reading_check.questions?.length || 0)}
+              className="w-full btn-primary px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              Check Answers
+            </button>
+          </div>
+        )}
+
         {/* ── CLUE ── */}
         {step === "clue" && (
           <div>
@@ -694,6 +757,38 @@ export default function PlayPage() {
                 <p className="text-sm text-yellow-800">
                   <strong>Hint (Level {hintLevel}):</strong> {hintText}
                 </p>
+                {!hintRated && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[11px] text-yellow-600">Was this helpful?</span>
+                    <button
+                      onClick={() => {
+                        fetch("/api/v1/hints/rate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ find_id: currentFind?.id, rating: 1 }),
+                        });
+                        setHintRated(true);
+                      }}
+                      className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 hover:bg-green-200"
+                    >
+                      👍
+                    </button>
+                    <button
+                      onClick={() => {
+                        fetch("/api/v1/hints/rate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ find_id: currentFind?.id, rating: -1 }),
+                        });
+                        setHintRated(true);
+                      }}
+                      className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200"
+                    >
+                      👎
+                    </button>
+                  </div>
+                )}
+                {hintRated && <p className="text-[11px] text-yellow-600 mt-1">Thanks for the feedback!</p>}
               </div>
             )}
 
@@ -828,6 +923,70 @@ export default function PlayPage() {
               </div>
             )}
 
+            {/* Technique review (optional post-challenge reflection) */}
+            {score !== null && !techniqueReviewDone && (
+              <div className="mt-3">
+                {!showTechniqueReview ? (
+                  <button
+                    onClick={() => setShowTechniqueReview(true)}
+                    className="text-xs text-sky-600 hover:underline"
+                  >
+                    Reflect on your approach (optional)
+                  </button>
+                ) : (
+                  <div className="rounded-lg bg-sky-50 border border-sky-200 p-3">
+                    <p className="text-xs font-medium text-sky-700 mb-2">What helped you?</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {[
+                        { key: "read_carefully", label: "Read carefully" },
+                        { key: "used_hint", label: "Used a hint" },
+                        { key: "talked_with_team", label: "Talked with team" },
+                        { key: "tried_and_learned", label: "Tried & learned" },
+                        { key: "remembered", label: "Remembered from primer" },
+                        { key: "guessed", label: "Guessed" },
+                      ].map((s) => (
+                        <button
+                          key={s.key}
+                          onClick={() => {
+                            const el = document.querySelector(`[data-strategy="${s.key}"]`);
+                            el?.classList.toggle("bg-sky-200");
+                            el?.classList.toggle("text-sky-800");
+                          }}
+                          data-strategy={s.key}
+                          className="rounded-full px-2.5 py-1 text-[11px] bg-gray-100 text-gray-600 transition"
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-sky-700 mb-1">How confident are you?</p>
+                    <div className="flex gap-2 mb-2">
+                      {["😞", "😐", "😊"].map((emoji, i) => (
+                        <button key={i} className="text-lg hover:scale-110 transition" onClick={() => {
+                          fetch("/api/v1/technique-review", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              hunt_id: huntId,
+                              confidence: i + 1,
+                              strategies: Array.from(document.querySelectorAll("[data-strategy].bg-sky-200")).map(el => el.getAttribute("data-strategy")),
+                            }),
+                          });
+                          setTechniqueReviewDone(true);
+                          setShowTechniqueReview(false);
+                        }}>
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {techniqueReviewDone && (
+              <p className="text-[11px] text-sky-600 mt-2">Thanks for reflecting!</p>
+            )}
+
             {/* Show "completed" for revisited finds that have no live score */}
             {score === null && completedFinds.has(currentFind?.id || "") && (
               <div className="text-center py-8 text-gray-500">
@@ -865,6 +1024,32 @@ export default function PlayPage() {
             </button>
           )
         )}
+      </div>
+
+      {/* Report a problem */}
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => {
+            const category = prompt("What's the issue?\n1. Mean/hurtful\n2. Inappropriate\n3. Spam\n4. Off-topic\n5. Other");
+            const cats = ["mean_hurtful", "inappropriate", "spam", "off_topic", "other"];
+            const idx = parseInt(category || "0") - 1;
+            if (idx >= 0 && idx < cats.length) {
+              fetch("/api/v1/reports", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  category: cats[idx],
+                  target_type: "find",
+                  target_id: currentFind?.id || huntId,
+                }),
+              });
+              alert("Thanks for reporting. A teacher will review this.");
+            }
+          }}
+          className="text-[10px] text-gray-400 hover:text-gray-600"
+        >
+          Report a problem
+        </button>
       </div>
     </main>
   );

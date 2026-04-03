@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Leaderboard from "@/components/social/leaderboard";
 import HuntAnalytics from "@/components/hunts/hunt-analytics";
+import HuntRating from "@/components/hunts/hunt-rating";
 import HuntMap from "@/components/hunts/hunt-map";
 import { StopList } from "@/components/hunts/stop-detail-modal";
 
@@ -81,6 +82,9 @@ export default async function HuntDetailPage({
       >
         Start Hunt
       </Link>
+
+      {/* Hunt rating */}
+      <HuntRating huntId={hunt.id} />
 
       {/* Hunt performance analytics */}
       <HuntAnalytics huntId={hunt.id} />

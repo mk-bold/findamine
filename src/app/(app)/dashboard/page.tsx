@@ -42,8 +42,18 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-4xl px-4 pt-4">
-        <HeroBanner src={hero.src} alt={hero.alt} compact />
+      <div
+        className="relative w-full h-16 sm:h-20 flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${hero.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <h1 className="relative text-white text-lg sm:text-xl font-semibold tracking-wide drop-shadow-md">
+          Dashboard
+        </h1>
       </div>
       <DashboardClient user={profile} />
     </>
