@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import FindEditor from "@/components/hunts/find-editor";
 import HuntCoverageReport from "@/components/hunts/hunt-coverage-report";
+import LocationPicker from "@/components/maps/location-picker";
 
 interface HuntDetail {
   id: string;
@@ -15,6 +16,9 @@ interface HuntDetail {
   play_mode: string;
   identity_mode: string;
   estimated_duration_min: number | null;
+  center_latitude: number | null;
+  center_longitude: number | null;
+  search_radius_km: number | null;
   finds: FindItem[];
 }
 
@@ -192,7 +196,32 @@ export default function HuntDetailPage() {
       </div>
 
       {hunt.description && (
-        <p className="text-gray-600 mb-8">{hunt.description}</p>
+        <p className="text-gray-600 mb-4">{hunt.description}</p>
+      )}
+
+      {/* Hunt center point */}
+      {isDraft && (
+        <details className="mb-4">
+          <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+            Hunt Center Point {hunt.center_latitude ? `(${hunt.center_latitude.toFixed(4)}, ${hunt.center_longitude?.toFixed(4)})` : "(not set)"}
+          </summary>
+          <div className="mt-2 rounded-lg border border-gray-200 p-3">
+            <p className="text-xs text-gray-500 mb-2">Click the map or search to set where this hunt is centered. This appears as a blue marker on the hunt map.</p>
+            <LocationPicker
+              latitude={hunt.center_latitude}
+              longitude={hunt.center_longitude}
+              radiusMeters={((hunt.search_radius_km || 5) * 1000)}
+              onLocationChange={async (lat, lng) => {
+                await fetch(`/api/v1/hunts/${hunt.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ center_latitude: lat, center_longitude: lng }),
+                });
+                fetchHunt();
+              }}
+            />
+          </div>
+        </details>
       )}
 
       {/* Finds section */}

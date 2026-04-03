@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LocationPicker from "@/components/maps/location-picker";
+import { HUNT_PRESETS, type HuntPreset } from "@/lib/utils/hunt-presets";
 
 const SUBJECTS = [
   { value: "science_nature", label: "Science & Nature" },
@@ -45,6 +47,18 @@ export default function NewHuntPage() {
   const [aiDuration, setAiDuration] = useState("40");
   const [aiDifficulty, setAiDifficulty] = useState("ascending");
   const [aiTheme, setAiTheme] = useState("");
+  // Hunt center point
+  const [centerLat, setCenterLat] = useState<number | null>(null);
+  const [centerLng, setCenterLng] = useState<number | null>(null);
+  const [showCenterPicker, setShowCenterPicker] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<HuntPreset | null>(null);
+
+  function applyPreset(preset: HuntPreset) {
+    setSelectedPreset(preset);
+    setMode("manual");
+    setAiResult(null);
+  }
+
   const [aiResult, setAiResult] = useState<{
     title: string;
     description: string;
@@ -69,6 +83,13 @@ export default function NewHuntPage() {
         play_mode: form.get("play_mode"),
         identity_mode: form.get("identity_mode"),
         estimated_duration_min: form.get("duration") ? parseInt(form.get("duration") as string) : null,
+        center_latitude: centerLat,
+        center_longitude: centerLng,
+        ...(selectedPreset ? {
+          play_mode: selectedPreset.settings.play_mode,
+          identity_mode: selectedPreset.settings.identity_mode,
+          metadata: selectedPreset.settings.metadata,
+        } : {}),
       }),
     });
 
@@ -195,6 +216,34 @@ export default function NewHuntPage() {
     <main className="mx-auto max-w-2xl px-4 py-4">
       <h1 className="text-lg font-semibold text-gray-900 mb-4">Create New Hunt</h1>
 
+      {/* Quick Start Presets */}
+      <div className="mb-5">
+        <p className="text-xs font-medium text-gray-500 mb-2">Quick Start — choose a preset</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {HUNT_PRESETS.map((preset) => (
+            <button
+              key={preset.key}
+              onClick={() => applyPreset(preset)}
+              className={`text-left rounded-lg border p-2.5 transition hover:shadow-sm ${
+                selectedPreset?.key === preset.key
+                  ? preset.color + " ring-2 ring-offset-1 ring-sky-400"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <span className="text-lg">{preset.icon}</span>
+              <p className="text-xs font-medium text-gray-900 mt-0.5">{preset.name}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{preset.description}</p>
+            </button>
+          ))}
+        </div>
+        {selectedPreset && (
+          <p className="text-xs text-sky-600 mt-2">
+            Using <strong>{selectedPreset.name}</strong> preset. You can modify any settings below.
+            <button onClick={() => setSelectedPreset(null)} className="ml-2 text-gray-400 hover:text-gray-600">Clear</button>
+          </p>
+        )}
+      </div>
+
       {/* Mode toggle */}
       <div className="flex gap-2 mb-6">
         <button
@@ -267,6 +316,30 @@ export default function NewHuntPage() {
           <div>
             <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Estimated Duration (minutes)</label>
             <input id="duration" name="duration" type="number" min={5} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500" placeholder="30" />
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowCenterPicker(!showCenterPicker)}
+              className="text-sm text-sky-600 hover:underline"
+            >
+              {showCenterPicker ? "Hide" : "Set"} hunt location on map
+              {centerLat ? ` (${centerLat.toFixed(4)}, ${centerLng?.toFixed(4)})` : " (optional)"}
+            </button>
+            {showCenterPicker && (
+              <div className="mt-2 rounded-lg border border-gray-200 p-3">
+                <p className="text-xs text-gray-500 mb-2">Click the map or search for an address to set the hunt center point.</p>
+                <LocationPicker
+                  latitude={centerLat}
+                  longitude={centerLng}
+                  radiusMeters={5000}
+                  onLocationChange={(lat, lng) => {
+                    setCenterLat(lat);
+                    setCenterLng(lng);
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={loading} className="btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50">
