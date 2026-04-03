@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import InsightsPanel from "@/components/hunts/insights-panel";
+import StreakDisplay from "@/components/gamification/streak-display";
+import FeaturedHunts from "@/components/gamification/featured-hunts";
 
 interface DashboardUser {
   id: string;
@@ -40,12 +42,18 @@ export default function DashboardClient({ user }: { user: DashboardUser }) {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-4">
-      <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
-      <p className="mt-0.5 text-sm text-gray-500">
-        Welcome back, {user.display_name || "explorer"}.
-      </p>
+      <div className="flex items-center justify-between mb-1">
+        <div>
+          <p className="text-sm text-gray-500">
+            Welcome back, {user.display_name || "explorer"}.
+          </p>
+        </div>
+        <StreakDisplay />
+      </div>
 
-      <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <FeaturedHunts />
+
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="My Hunts"
           description="Create and manage scavenger hunts"
