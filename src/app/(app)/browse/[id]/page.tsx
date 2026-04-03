@@ -4,6 +4,7 @@ import Link from "next/link";
 import Leaderboard from "@/components/social/leaderboard";
 import HuntAnalytics from "@/components/hunts/hunt-analytics";
 import HuntMap from "@/components/hunts/hunt-map";
+import { StopList } from "@/components/hunts/stop-detail-modal";
 
 export default async function HuntDetailPage({
   params,
@@ -15,7 +16,7 @@ export default async function HuntDetailPage({
 
   const { data: hunt } = await supabase
     .from("hunts")
-    .select("*, finds(id, sort_order, clue_text, locations(name, latitude, longitude), tasks(title, challenge_type))")
+    .select("*, finds(id, sort_order, clue_text, clue_hints, locations(name, latitude, longitude, radius_meters), tasks(title, challenge_type), primers(title, content))")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
@@ -69,29 +70,8 @@ export default async function HuntDetailPage({
 
       {finds.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Stops</h2>
-          <ol className="space-y-3">
-            {finds.map((find: { id: string; sort_order: number; clue_text: string | null; locations: { name: string } | null; tasks: { title: string; challenge_type: string } | null }, i: number) => (
-              <li key={find.id} className="flex gap-3 rounded-lg border border-gray-200 p-4">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-medium text-sky-700">
-                  {i + 1}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {(find.locations as { name: string } | null)?.name || `Stop ${i + 1}`}
-                  </p>
-                  {find.clue_text && (
-                    <p className="text-sm text-gray-500 mt-0.5">{find.clue_text}</p>
-                  )}
-                  {find.tasks && (
-                    <span className="text-xs text-gray-500">
-                      {(find.tasks as { challenge_type: string }).challenge_type.replace(/_/g, " ")}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
+          <h2 className="text-sm font-semibold text-gray-900 mb-2">Stops — click for details</h2>
+          <StopList finds={finds} />
         </div>
       )}
 
