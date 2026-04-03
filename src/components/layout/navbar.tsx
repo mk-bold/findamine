@@ -40,7 +40,7 @@ export default function Navbar({ user }: NavbarProps) {
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-10">
         <Link href={user ? "/dashboard" : "/"}>
-          <Image src="/logo-findamine.png" alt="findamine" width={100} height={20} className="max-h-[22px] w-auto" style={{ objectFit: "contain", height: "22px" }} />
+          <Image src="/logo-findamine.png" alt="findamine" width={120} height={25} className="max-h-[28px] w-auto" style={{ objectFit: "contain", height: "28px" }} />
         </Link>
 
         {/* Desktop nav */}

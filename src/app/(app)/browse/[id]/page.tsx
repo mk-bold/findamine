@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Leaderboard from "@/components/social/leaderboard";
 import HuntAnalytics from "@/components/hunts/hunt-analytics";
+import HuntMap from "@/components/hunts/hunt-map";
 
 export default async function HuntDetailPage({
   params,
@@ -14,7 +15,7 @@ export default async function HuntDetailPage({
 
   const { data: hunt } = await supabase
     .from("hunts")
-    .select("*, finds(id, sort_order, clue_text, locations(name), tasks(title, challenge_type))")
+    .select("*, finds(id, sort_order, clue_text, locations(name, latitude, longitude), tasks(title, challenge_type))")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
@@ -36,6 +37,18 @@ export default async function HuntDetailPage({
       {hunt.description && (
         <p className="text-gray-600 mb-6">{hunt.description}</p>
       )}
+
+      {/* Hunt map */}
+      <HuntMap
+        centerLat={hunt.center_latitude}
+        centerLng={hunt.center_longitude}
+        stops={finds.map((f: { sort_order: number; locations: { name: string; latitude: number; longitude: number } | null }) => ({
+          order: f.sort_order + 1,
+          name: (f.locations as { name: string } | null)?.name || `Stop ${f.sort_order + 1}`,
+          lat: (f.locations as { latitude: number } | null)?.latitude || 0,
+          lng: (f.locations as { longitude: number } | null)?.longitude || 0,
+        })).filter((s: { lat: number; lng: number }) => s.lat !== 0 && s.lng !== 0)}
+      />
 
       <div className="flex flex-wrap gap-3 mb-8">
         <span className="rounded-full bg-sky-50 px-3 py-1 text-sm text-sky-700">
