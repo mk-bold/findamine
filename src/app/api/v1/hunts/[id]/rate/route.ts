@@ -1,0 +1,71 @@
+import { NextRequest } from "next/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+
+/**
+ * Rate and review a hunt (1-5 stars + optional review text).
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
+    const body = await request.json();
+    const rating = Math.max(1, Math.min(5, parseInt(body.rating) || 3));
+    const reviewText = body.review_text?.slice(0, 2000) || null;
+
+    const supabase = await createSupabaseServiceClient();
+
+    // Upsert: one rating per user per hunt
+    const { data, error } = await supabase
+      .from("hunt_ratings")
+      .upsert({
+        hunt_id: id,
+        user_id: user.id,
+        rating,
+        review_text: reviewText,
+      }, { onConflict: "hunt_id,user_id" })
+      .select()
+      .single();
+
+    if (error) throw new ApiError(500, error.message);
+
+    return Response.json({ rating: data });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createSupabaseServiceClient();
+
+    const { data: ratings } = await supabase
+      .from("hunt_ratings")
+      .select("rating, review_text, created_at, users(display_name)")
+      .eq("hunt_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const allRatings = (ratings || []).map((r) => r.rating);
+    const avgRating = allRatings.length
+      ? Math.round((allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 10) / 10
+      : null;
+
+    return Response.json({
+      avg_rating: avgRating,
+      total_ratings: allRatings.length,
+      ratings: ratings || [],
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
