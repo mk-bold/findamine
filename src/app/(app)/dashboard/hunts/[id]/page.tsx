@@ -19,6 +19,7 @@ interface HuntDetail {
   center_latitude: number | null;
   center_longitude: number | null;
   search_radius_km: number | null;
+  metadata: Record<string, unknown> | null;
   finds: FindItem[];
 }
 
@@ -192,11 +193,71 @@ export default function HuntDetailPage() {
           >
             Clone
           </button>
+          <Link
+            href={`/dashboard/hunts/${hunt.id}/analytics`}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Analytics
+          </Link>
         </div>
       </div>
 
       {hunt.description && (
         <p className="text-gray-600 mb-4">{hunt.description}</p>
+      )}
+
+      {/* Hunt settings */}
+      {isDraft && (
+        <details className="mb-4">
+          <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+            Hunt Settings
+          </summary>
+          <div className="mt-2 rounded-lg border border-gray-200 p-3 space-y-3">
+            {/* Anxiety-Sensitive Mode */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!hunt.metadata?.hide_scores}
+                onChange={async (e) => {
+                  const anxietyMode = e.target.checked;
+                  const metadata = { ...(hunt.metadata || {}), hide_scores: anxietyMode, hide_leaderboard: anxietyMode, hide_timer: anxietyMode, growth_only_feedback: anxietyMode };
+                  await fetch(`/api/v1/hunts/${hunt.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ metadata }),
+                  });
+                  fetchHunt();
+                }}
+                className="rounded accent-green-600"
+              />
+              <span className="text-sm text-gray-700">Anxiety-Sensitive Mode</span>
+              <span className="text-[11px] text-gray-400">(hides scores, leaderboards, timers)</span>
+            </label>
+
+            {/* Scoring Mode */}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Scoring Mode</label>
+              <select
+                value={(hunt.metadata?.scoring_mode as string) || "standard"}
+                onChange={async (e) => {
+                  const metadata = { ...(hunt.metadata || {}), scoring_mode: e.target.value };
+                  await fetch(`/api/v1/hunts/${hunt.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ metadata }),
+                  });
+                  fetchHunt();
+                }}
+                className="block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                <option value="standard">Standard — balanced scoring with hints and retries</option>
+                <option value="binary">Binary — correct (100) or incorrect (0), no partial credit</option>
+                <option value="lenient">Lenient — extra growth credit, free hints</option>
+                <option value="mastery">Mastery — must score 80%+ to advance</option>
+              </select>
+            </div>
+          </div>
+        </details>
       )}
 
       {/* Hunt center point */}

@@ -15,9 +15,20 @@ interface Find {
   sort_order: number;
   clue_text: string | null;
   hot_cold_enabled: boolean;
+  scaffolding_level: string | null;
   locations: { name: string; latitude: number; longitude: number; radius_meters: number } | null;
   tasks: { title: string; challenge_type: string; content: Record<string, unknown> } | null;
   primers: { title: string; content: Record<string, unknown> } | null;
+}
+
+// Hunt metadata for anxiety-sensitive mode and scoring
+interface HuntMetadata {
+  hide_scores?: boolean;
+  hide_leaderboard?: boolean;
+  hide_timer?: boolean;
+  growth_only_feedback?: boolean;
+  scoring_mode?: string;
+  preset?: string;
 }
 
 interface HotCold {
@@ -48,6 +59,7 @@ export default function PlayPage() {
   const router = useRouter();
 
   const [finds, setFinds] = useState<Find[]>([]);
+  const [huntMeta, setHuntMeta] = useState<HuntMetadata>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState<StopStep>("prime");
   const [answer, setAnswer] = useState("");
@@ -94,6 +106,15 @@ export default function PlayPage() {
         const findsData = await findsRes.json();
         const startData = await startRes.json();
         setFinds(findsData.finds || []);
+
+        // Fetch hunt metadata for anxiety-sensitive mode and scoring config
+        try {
+          const huntRes = await safeFetch(`/api/v1/hunts/${huntId}`);
+          const huntData = await huntRes.json();
+          if (huntData.hunt?.metadata) {
+            setHuntMeta(huntData.hunt.metadata as HuntMetadata);
+          }
+        } catch { /* non-critical */ }
 
         // If player has a codename, we could show it — stored in startData.session.codename
 
@@ -757,10 +778,16 @@ export default function PlayPage() {
           <div>
             <h2 className="text-lg font-bold text-gray-900 mb-3">Results</h2>
 
-            {score !== null && (
+            {score !== null && !huntMeta.hide_scores && (
               <div className="text-center mb-4">
                 <div className="text-4xl font-bold text-themed-primary">{score}</div>
                 <p className="text-sm text-gray-500">points earned</p>
+              </div>
+            )}
+            {score !== null && huntMeta.hide_scores && (
+              <div className="text-center mb-4">
+                <div className="text-4xl font-bold text-green-600">Complete!</div>
+                <p className="text-sm text-gray-500">Great effort on this stop</p>
               </div>
             )}
 

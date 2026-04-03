@@ -39,6 +39,7 @@ export interface ScoringInput {
   expectedTimeSeconds?: number;
   isFirstAttempt: boolean;
   challengeType: string;
+  scoringMode?: "standard" | "binary" | "lenient" | "mastery";
 }
 
 export interface ScoringResult {
@@ -62,7 +63,29 @@ export function calculateScore(
   input: ScoringInput,
   config: ScoringConfig = DEFAULT_SCORING
 ): ScoringResult {
-  const maxAttempts = 5;
+  // Apply scoring mode overrides
+  const effectiveConfig = { ...config };
+  let maxAttempts = 5;
+
+  switch (input.scoringMode) {
+    case "binary":
+      // No partial credit, no retries
+      input.partialCredit = undefined;
+      maxAttempts = 1;
+      break;
+    case "lenient":
+      // Extra growth credit, free hints
+      effectiveConfig.clueHintPenalty = 0;
+      effectiveConfig.challengeHintPenalty = 0;
+      effectiveConfig.minScore = 10;
+      maxAttempts = 10;
+      break;
+    case "mastery":
+      // Unlimited retries, must score high to "pass"
+      maxAttempts = 99;
+      break;
+    // "standard" or undefined: use defaults
+  }
 
   // Correctness (0-100)
   let correctness = 0;
@@ -93,24 +116,24 @@ export function calculateScore(
   const clueHints = Math.max(0, Math.floor(input.clueHintsUsed ?? 0));
   const challengeHints = Math.max(0, Math.floor(input.challengeHintsUsed ?? input.hintsUsed ?? 0));
   const hintPenalty =
-    clueHints * config.clueHintPenalty +
-    challengeHints * config.challengeHintPenalty;
+    clueHints * effectiveConfig.clueHintPenalty +
+    challengeHints * effectiveConfig.challengeHintPenalty;
 
   // Effort credit (minimum points for any attempt)
-  const effortCredit = input.isCorrect ? 0 : config.minScore;
+  const effortCredit = input.isCorrect ? 0 : effectiveConfig.minScore;
 
   // Weighted total
   const rawScore =
-    correctness * config.correctnessWeight +
-    masteryBonus * config.masteryBonusWeight +
-    completion * config.completionWeight +
-    speed * config.speedWeight -
+    correctness * effectiveConfig.correctnessWeight +
+    masteryBonus * effectiveConfig.masteryBonusWeight +
+    completion * effectiveConfig.completionWeight +
+    speed * effectiveConfig.speedWeight -
     hintPenalty +
     effortCredit;
 
   const totalScore = Math.max(
-    config.minScore,
-    Math.min(config.maxScore, Math.round(rawScore))
+    effectiveConfig.minScore,
+    Math.min(effectiveConfig.maxScore, Math.round(rawScore))
   );
 
   // Determine feedback type
@@ -121,10 +144,10 @@ export function calculateScore(
   return {
     totalScore,
     breakdown: {
-      correctness: Math.round(correctness * config.correctnessWeight),
-      masteryBonus: Math.round(masteryBonus * config.masteryBonusWeight),
-      completion: Math.round(completion * config.completionWeight),
-      speed: Math.round(speed * config.speedWeight),
+      correctness: Math.round(correctness * effectiveConfig.correctnessWeight),
+      masteryBonus: Math.round(masteryBonus * effectiveConfig.masteryBonusWeight),
+      completion: Math.round(completion * effectiveConfig.completionWeight),
+      speed: Math.round(speed * effectiveConfig.speedWeight),
       hintPenalty,
       effortCredit,
     },

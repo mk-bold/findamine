@@ -225,6 +225,47 @@ function getOpenAI(): OpenAI {
 }
 
 /**
+ * Generate reading comprehension questions from primer content.
+ */
+export async function generateReadingCheck(params: {
+  primerContent: Record<string, unknown>;
+  numQuestions?: number;
+  gradeRange?: { min: number; max: number };
+}): Promise<{ question: string; options: string[]; correct_answer: string }[]> {
+  const { primerContent, numQuestions = 3, gradeRange } = params;
+
+  const prompt = `Generate ${numQuestions} multiple-choice comprehension questions to check if a student understood this educational primer content. Each question should have 4 options with exactly 1 correct answer.
+
+Primer content: ${JSON.stringify(primerContent).slice(0, 1500)}
+Grade level: ${gradeRange ? `${gradeRange.min}-${gradeRange.max}` : "3-8"}
+
+Format as JSON array:
+[{"question": "...", "options": ["A", "B", "C", "D"], "correct_answer": "A"}]`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 800,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You create reading comprehension questions for educational content. Output valid JSON only." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : parsed.questions || [];
+    }
+  } catch {
+    // Fall through
+  }
+
+  return [];
+}
+
+/**
  * Generate a clue + 3 progressive clue hints for a stop.
  */
 export async function generateClueWithHints(params: {

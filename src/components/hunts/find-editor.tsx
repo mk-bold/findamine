@@ -43,6 +43,9 @@ export default function FindEditor({ huntId, onSaved, onCancel, experimentCondit
   const [longitude, setLongitude] = useState("");
   const [radiusMeters, setRadiusMeters] = useState("50");
 
+  // Stop settings
+  const [scaffoldingLevel, setScaffoldingLevel] = useState("medium");
+
   // Clue
   const [clueText, setClueText] = useState("");
 
@@ -258,6 +261,7 @@ export default function FindEditor({ huntId, onSaved, onCancel, experimentCondit
           primer_id: primerId,
           clue_text: clueText,
           hot_cold_enabled: true,
+          scaffolding_level: scaffoldingLevel,
         }),
       });
       if (!findRes.ok) {
@@ -334,6 +338,25 @@ export default function FindEditor({ huntId, onSaved, onCancel, experimentCondit
           >
             Use my current location
           </button>
+        </div>
+      </fieldset>
+
+      {/* ── Stop Settings ── */}
+      <fieldset className="mb-5">
+        <legend className="text-sm font-medium text-gray-700 mb-2">Stop Settings</legend>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="block text-xs text-gray-500 mb-1">Scaffolding Level</label>
+            <select
+              value={scaffoldingLevel}
+              onChange={(e) => setScaffoldingLevel(e.target.value)}
+              className="block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            >
+              <option value="high">High — hints free, full AI, unlimited retries</option>
+              <option value="medium">Medium — hints -3pts, 5 retries (default)</option>
+              <option value="low">Low — hints -5pts, 2 retries</option>
+            </select>
+          </div>
         </div>
       </fieldset>
 
