@@ -10,6 +10,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("user_id") || user.id;
 
+    // Only teachers/admins can view other users' accommodations
+    if (userId !== user.id && !["teacher", "parent", "admin", "researcher"].includes(user.role)) {
+      throw new ApiError(403, "Cannot view other users' accommodations");
+    }
+
     const supabase = await createSupabaseServiceClient();
 
     const { data } = await supabase

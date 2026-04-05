@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("users")
-      .select("*")
+      .select("id, display_name, email, role, status, avatar_url, created_at")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(limit);

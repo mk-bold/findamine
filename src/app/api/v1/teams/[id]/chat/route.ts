@@ -11,10 +11,21 @@ export async function GET(
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "50");
-
     const supabase = await createSupabaseServiceClient();
+
+    // Verify user is a member of this team
+    if (!["admin", "researcher"].includes(user.role)) {
+      const { data: membership } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!membership) throw new ApiError(403, "Not a member of this team");
+    }
+
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") || "50") || 50, 200);
 
     const { data, error } = await supabase
       .from("team_messages")

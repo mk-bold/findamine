@@ -20,6 +20,19 @@ export async function POST(
 
     const supabase = await createSupabaseServiceClient();
 
+    // Verify user has played this hunt
+    const { data: playSession } = await supabase
+      .from("play_sessions")
+      .select("id")
+      .eq("hunt_id", id)
+      .eq("user_id", user.id)
+      .in("status", ["completed", "active"])
+      .maybeSingle();
+
+    if (!playSession && !["admin", "researcher"].includes(user.role)) {
+      throw new ApiError(403, "You must play this hunt before rating it");
+    }
+
     // Upsert: one rating per user per hunt
     const { data, error } = await supabase
       .from("hunt_ratings")

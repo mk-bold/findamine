@@ -58,10 +58,31 @@ export async function PATCH(
     const body = await request.json();
     const supabase = await createSupabaseServiceClient();
 
+    // Verify ownership: must be team member, hunt owner, or admin
+    const { data: team } = await supabase
+      .from("teams")
+      .select("hunt_id, team_members(user_id)")
+      .eq("id", id)
+      .single();
+
+    if (!team) throw new ApiError(404, "Team not found");
+
+    const isMember = (team.team_members as { user_id: string }[])?.some((m) => m.user_id === user.id);
+    if (!isMember && !["admin", "researcher"].includes(user.role)) {
+      const { data: hunt } = await supabase.from("hunts").select("created_by").eq("id", team.hunt_id).single();
+      if (!hunt || hunt.created_by !== user.id) {
+        throw new ApiError(403, "Not authorized to update this team");
+      }
+    }
+
     const updates: Record<string, unknown> = {};
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.status !== undefined) updates.status = body.status;
-    if (body.max_size !== undefined) updates.max_size = body.max_size;
+    if (body.name !== undefined) updates.name = String(body.name).slice(0, 100);
+    if (body.status !== undefined) {
+      const validStatuses = ["forming", "ready", "active", "completed", "disbanded"];
+      if (!validStatuses.includes(body.status)) throw new ApiError(400, "Invalid status");
+      updates.status = body.status;
+    }
+    if (body.max_size !== undefined) updates.max_size = Math.max(2, Math.min(20, parseInt(body.max_size) || 6));
 
     const { data, error } = await supabase
       .from("teams")

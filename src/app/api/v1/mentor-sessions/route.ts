@@ -1,12 +1,14 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 /**
  * Mentor session tracking — logs peer mentoring interactions.
  */
 export async function POST(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 
@@ -14,6 +16,7 @@ export async function POST(request: NextRequest) {
     const { mentee_id, hunt_id, team_id, help_type, notes } = body;
 
     if (!mentee_id) throw new ApiError(400, "mentee_id required");
+    if (mentee_id === user.id) throw new ApiError(400, "Cannot mentor yourself");
 
     const validTypes = ["hint", "feedback", "explanation", "peer_review"];
     const type = validTypes.includes(help_type) ? help_type : "feedback";

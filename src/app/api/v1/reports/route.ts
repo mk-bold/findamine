@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { authLimiter } from "@/lib/utils/rate-limit";
 
 const REPORT_CATEGORIES = ["mean_hurtful", "inappropriate", "spam", "off_topic", "other"];
 
@@ -9,6 +10,7 @@ const REPORT_CATEGORIES = ["mean_hurtful", "inappropriate", "spam", "off_topic",
  */
 export async function POST(request: NextRequest) {
   try {
+    await authLimiter.check(request); // Strict limit to prevent spam
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 

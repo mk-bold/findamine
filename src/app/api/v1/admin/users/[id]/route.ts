@@ -38,9 +38,18 @@ export async function PUT(
     const body = await request.json();
     const supabase = await createSupabaseServiceClient();
 
+    const validRoles = ["child", "teen", "parent", "teacher", "hunt_creator", "admin", "researcher"];
+    const validStatuses = ["active", "inactive", "suspended", "banned", "pending_consent"];
+
     const updates: Record<string, unknown> = {};
-    if (body.role !== undefined) updates.role = body.role;
-    if (body.status !== undefined) updates.status = body.status;
+    if (body.role !== undefined) {
+      if (!validRoles.includes(body.role)) throw new ApiError(400, "Invalid role");
+      updates.role = body.role;
+    }
+    if (body.status !== undefined) {
+      if (!validStatuses.includes(body.status)) throw new ApiError(400, "Invalid status");
+      updates.status = body.status;
+    }
 
     const { data, error } = await supabase
       .from("users")
