@@ -15,119 +15,58 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createSupabaseServiceClient();
 
-    // Get all completed sessions with hunt info
-    const { data: sessions } = await supabase
-      .from("play_sessions")
-      .select("hunt_id, total_score, status, started_at, completed_at, hunts(title, target_audience, estimated_duration_min)")
-      .eq("status", "completed")
-      .limit(5000);
+    // All aggregation via PostgreSQL RPC functions (scales to millions)
+    const [huntInsights, challengeTypes, totalCount] = await Promise.all([
+      supabase.rpc("get_hunt_insights", { p_limit: 10 }),
+      supabase.rpc("get_challenge_type_effectiveness"),
+      supabase.from("play_sessions").select("id", { count: "exact", head: true }).eq("status", "completed"),
+    ]);
 
-    // Aggregate per hunt
-    const huntMap = new Map<string, {
-      title: string;
-      audience: string;
-      plays: number;
-      scores: number[];
-      durations: number[];
-    }>();
+    const insights = huntInsights.data || [];
 
-    for (const s of sessions || []) {
-      const huntInfo = s.hunts as unknown as { title: string; target_audience: string } | null;
-      if (!huntInfo) continue;
+    // Top by score and top by plays are from the same RPC, just sorted differently
+    const topByScore = [...insights].sort((a, b) => (b.avg_score || 0) - (a.avg_score || 0)).slice(0, 10);
+    const topByPlays = [...insights].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 10);
 
-      if (!huntMap.has(s.hunt_id)) {
-        huntMap.set(s.hunt_id, {
-          title: huntInfo.title,
-          audience: huntInfo.target_audience,
-          plays: 0,
-          scores: [],
-          durations: [],
-        });
-      }
-      const h = huntMap.get(s.hunt_id)!;
-      h.plays++;
-      h.scores.push(s.total_score || 0);
-      if (s.started_at && s.completed_at) {
-        h.durations.push((new Date(s.completed_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-      }
-    }
-
-    // Top hunts by average score (min 3 plays)
-    const topByScore = Array.from(huntMap.entries())
-      .filter(([, h]) => h.plays >= 3)
-      .map(([id, h]) => ({
-        hunt_id: id,
-        title: h.title,
-        audience: h.audience,
-        plays: h.plays,
-        avg_score: Math.round(h.scores.reduce((a, b) => a + b, 0) / h.scores.length),
-      }))
-      .sort((a, b) => b.avg_score - a.avg_score)
-      .slice(0, 10);
-
-    // Most played hunts
-    const topByPlays = Array.from(huntMap.entries())
-      .map(([id, h]) => ({
-        hunt_id: id,
-        title: h.title,
-        audience: h.audience,
-        plays: h.plays,
-        avg_score: Math.round(h.scores.reduce((a, b) => a + b, 0) / h.scores.length),
-      }))
-      .sort((a, b) => b.plays - a.plays)
-      .slice(0, 10);
-
-    // Challenge type effectiveness
-    const { data: completions } = await supabase
-      .from("find_completions")
-      .select("score, finds(tasks(challenge_type))")
-      .not("score", "is", null)
-      .limit(5000);
-
-    const typeScores = new Map<string, number[]>();
-    for (const c of completions || []) {
-      const finds = c.finds as unknown as { tasks: { challenge_type: string } | null } | null;
-      const type = finds?.tasks?.challenge_type;
-      if (!type || !c.score) continue;
-      if (!typeScores.has(type)) typeScores.set(type, []);
-      typeScores.get(type)!.push(c.score);
-    }
-
-    const challengeTypeInsights = Array.from(typeScores.entries())
-      .filter(([, scores]) => scores.length >= 5)
-      .map(([type, scores]) => ({
-        challenge_type: type,
-        avg_score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-        sample_size: scores.length,
-      }))
-      .sort((a, b) => b.avg_score - a.avg_score);
-
-    // Audience insights
-    const audienceMap = new Map<string, { plays: number; scores: number[] }>();
-    for (const [, h] of huntMap) {
-      if (!audienceMap.has(h.audience)) audienceMap.set(h.audience, { plays: 0, scores: [] });
-      const a = audienceMap.get(h.audience)!;
-      a.plays += h.plays;
-      a.scores.push(...h.scores);
+    // Audience insights from hunt insights
+    const audienceMap = new Map<string, { plays: number; totalScore: number; count: number }>();
+    for (const h of insights) {
+      const aud = h.target_audience || "all";
+      if (!audienceMap.has(aud)) audienceMap.set(aud, { plays: 0, totalScore: 0, count: 0 });
+      const a = audienceMap.get(aud)!;
+      a.plays += Number(h.plays) || 0;
+      a.totalScore += (Number(h.avg_score) || 0) * (Number(h.plays) || 0);
+      a.count += Number(h.plays) || 0;
     }
 
     const audienceInsights = Array.from(audienceMap.entries())
-      .filter(([, a]) => a.scores.length >= 3)
+      .filter(([, a]) => a.count >= 3)
       .map(([audience, a]) => ({
         audience,
         total_plays: a.plays,
-        avg_score: Math.round(a.scores.reduce((x, y) => x + y, 0) / a.scores.length),
+        avg_score: a.count > 0 ? Math.round(a.totalScore / a.count) : 0,
       }));
 
     return Response.json({
-      top_by_score: topByScore,
-      top_by_plays: topByPlays,
-      challenge_type_insights: challengeTypeInsights,
+      top_by_score: topByScore.map((h) => ({
+        hunt_id: h.hunt_id, title: h.title, audience: h.target_audience,
+        plays: Number(h.plays), avg_score: Number(h.avg_score),
+      })),
+      top_by_plays: topByPlays.map((h) => ({
+        hunt_id: h.hunt_id, title: h.title, audience: h.target_audience,
+        plays: Number(h.plays), avg_score: Number(h.avg_score),
+      })),
+      challenge_type_insights: (challengeTypes.data || []).map((ct: { challenge_type: string; avg_score: number; sample_size: number }) => ({
+        challenge_type: ct.challenge_type,
+        avg_score: Number(ct.avg_score),
+        sample_size: Number(ct.sample_size),
+      })),
       audience_insights: audienceInsights,
-      total_hunts_with_data: huntMap.size,
-      total_completions: sessions?.length || 0,
+      total_hunts_with_data: insights.length,
+      total_completions: totalCount.count || 0,
     });
   } catch (error) {
     return errorResponse(error);
   }
 }
+export const maxDuration = 60;

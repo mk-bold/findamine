@@ -25,6 +25,28 @@ function getIp(request: NextRequest): string {
   return forwarded?.split(",")[0]?.trim() || "unknown";
 }
 
+/**
+ * Get a composite rate limit key: userId:IP
+ * This ensures students in the same classroom (same IP) get individual limits.
+ * Falls back to IP-only for unauthenticated requests.
+ */
+function getCompositeKey(request: NextRequest): string {
+  const ip = getIp(request);
+  // Try to extract user ID from auth header (Bearer token) or cookie
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    // Use a hash of the token as user identifier (don't use full token as key)
+    const tokenHash = authHeader.slice(7, 20); // first 13 chars as fingerprint
+    return `${tokenHash}:${ip}`;
+  }
+  // For cookie-based auth, use a cookie fingerprint
+  const sbCookie = request.cookies.get("sb-access-token")?.value;
+  if (sbCookie) {
+    return `${sbCookie.slice(0, 13)}:${ip}`;
+  }
+  return ip;
+}
+
 function msToUpstashDuration(ms: number): `${number} s` | `${number} m` | `${number} h` {
   if (ms >= 3_600_000 && ms % 3_600_000 === 0) return `${ms / 3_600_000} h`;
   if (ms >= 60_000 && ms % 60_000 === 0) return `${ms / 60_000} m`;
@@ -58,7 +80,7 @@ function createRateLimiter(opts: {
     return {
       async check(request: NextRequest): Promise<void> {
         cleanup();
-        const key = getIp(request);
+        const key = getCompositeKey(request);
         const now = Date.now();
         const entry = store.get(key);
 

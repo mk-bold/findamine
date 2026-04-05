@@ -35,27 +35,13 @@ export default function NotificationBell() {
     fetchNotifications();
   }, []);
 
-  // Real-time subscription for new notifications
+  // Poll for new notifications every 30s (scales better than WebSocket per-user)
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    const channel = supabase
-      .channel("notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-        },
-        () => {
-          fetchNotifications();
-        }
-      )
-      .subscribe();
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   // Close dropdown on outside click or Escape

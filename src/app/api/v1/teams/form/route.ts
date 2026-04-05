@@ -274,3 +274,4 @@ function distributeRemaining(groups: string[][], remaining: string[], maxSize: n
     }
   }
 }
+export const maxDuration = 60;

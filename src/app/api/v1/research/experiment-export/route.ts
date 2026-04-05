@@ -107,3 +107,4 @@ function calculateTierPct(modes: Record<string, number>, modeNumbers: number[]):
   const tierTotal = modeNumbers.reduce((sum, m) => sum + (modes[String(m)] || 0), 0);
   return Math.round((tierTotal / total) * 100);
 }
+export const maxDuration = 60;

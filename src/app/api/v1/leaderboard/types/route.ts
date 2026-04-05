@@ -67,33 +67,9 @@ export async function GET(request: NextRequest) {
       }
 
       case "improvement": {
-        // Users with most score improvement (latest vs first hunt)
-        const { data } = await supabase
-          .from("play_sessions")
-          .select("user_id, total_score, completed_at, users(display_name)")
-          .eq("status", "completed")
-          .order("completed_at", { ascending: true });
-
-        // Calculate improvement per user
-        const userFirst = new Map<string, number>();
-        const userLast = new Map<string, { score: number; name: string }>();
-
-        for (const s of data || []) {
-          if (!userFirst.has(s.user_id)) userFirst.set(s.user_id, s.total_score || 0);
-          const userData = s.users as unknown as { display_name: string } | null;
-          userLast.set(s.user_id, { score: s.total_score || 0, name: userData?.display_name || "Anonymous" });
-        }
-
-        const improvements = Array.from(userFirst.entries())
-          .map(([uid, firstScore]) => {
-            const last = userLast.get(uid)!;
-            return { user_id: uid, display_name: last.name, improvement: last.score - firstScore, first_score: firstScore, latest_score: last.score };
-          })
-          .filter((u) => u.improvement > 0)
-          .sort((a, b) => b.improvement - a.improvement)
-          .slice(0, limit);
-
-        return Response.json({ type, entries: improvements });
+        // DB-level aggregation via RPC (scales to millions of sessions)
+        const { data } = await supabase.rpc("get_user_improvements", { p_limit: limit });
+        return Response.json({ type, entries: data || [] });
       }
 
       case "streak_current": {
@@ -108,28 +84,9 @@ export async function GET(request: NextRequest) {
       }
 
       case "speed_run": {
-        // Fastest completions (quality-gated: score >= 60)
-        const { data } = await supabase
-          .from("play_sessions")
-          .select("user_id, total_score, started_at, completed_at, users(display_name), hunts(title)")
-          .eq("status", "completed")
-          .gte("total_score", 60)
-          .not("completed_at", "is", null)
-          .order("completed_at", { ascending: false })
-          .limit(200);
-
-        const entries = (data || [])
-          .filter((s) => s.started_at && s.completed_at)
-          .map((s) => {
-            const duration = (new Date(s.completed_at!).getTime() - new Date(s.started_at!).getTime()) / 60000;
-            const userData = s.users as unknown as { display_name: string } | null;
-            const huntData = s.hunts as unknown as { title: string } | null;
-            return { user_id: s.user_id, display_name: userData?.display_name, hunt_title: huntData?.title, duration_min: Math.round(duration), score: s.total_score };
-          })
-          .sort((a, b) => a.duration_min - b.duration_min)
-          .slice(0, limit);
-
-        return Response.json({ type, entries });
+        // DB-level aggregation via RPC (scales to millions of sessions)
+        const { data } = await supabase.rpc("get_speed_run_leaderboard", { p_limit: limit });
+        return Response.json({ type, entries: data || [] });
       }
 
       default: {
@@ -142,3 +99,4 @@ export async function GET(request: NextRequest) {
     return errorResponse(error);
   }
 }
+export const maxDuration = 60;
