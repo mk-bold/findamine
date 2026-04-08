@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { uploadLimiter } from "@/lib/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    await uploadLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 
@@ -15,13 +17,29 @@ export async function POST(request: NextRequest) {
 
     if (!file) throw new ApiError(400, "No file provided");
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      throw new ApiError(400, "File too large (max 10MB)");
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      throw new ApiError(400, "File too large (max 2MB)");
+    }
+
+    // Validate content type
+    const ALLOWED_TYPES = [
+      "image/jpeg", "image/png", "image/gif", "image/webp",
+      "audio/mpeg", "audio/wav", "audio/webm",
+      "video/mp4", "video/webm",
+    ];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new ApiError(400, `File type not allowed. Accepted: ${ALLOWED_TYPES.join(", ")}`);
+    }
+
+    // Restrict bucket to allowed values
+    const ALLOWED_BUCKETS = ["hunt-media", "avatars", "captures"];
+    if (!ALLOWED_BUCKETS.includes(bucket)) {
+      throw new ApiError(400, "Invalid storage bucket");
     }
 
     const supabase = await createSupabaseServiceClient();
-    const ext = file.name.split(".").pop() || "bin";
+    const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
     const path = `${user.id}/${Date.now()}.${ext}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage

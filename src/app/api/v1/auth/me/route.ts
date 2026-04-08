@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServiceClient();
     const { data: profile, error } = await supabase
       .from("users")
-      .select("*")
+      .select("id, email, display_name, avatar_url, role, status, age_band, created_at, metadata, profile_visibility")
       .eq("id", user.id)
       .is("deleted_at", null)
       .single();
@@ -22,10 +22,7 @@ export async function GET(request: NextRequest) {
       throw new ApiError(404, "User profile not found");
     }
 
-    // Strip sensitive fields
-    const { auth_id, deleted_at, ...safeProfile } = profile;
-
-    return Response.json({ user: safeProfile });
+    return Response.json({ user: profile });
   } catch (error) {
     return errorResponse(error);
   }

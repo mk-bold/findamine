@@ -404,7 +404,7 @@ Specifications:
 - Location type: ${locationType}
 - Topic: ${topic}
 ${tags?.length ? `- Tags: ${tags.join(", ")}` : ""}
-${lessonPlanText ? `\nTeacher's lesson plan for context:\n${lessonPlanText.slice(0, 1000)}` : ""}
+${lessonPlanText ? `\nTeacher's lesson plan for context:\n${sanitizeForPrompt(lessonPlanText, 1000)}` : ""}
 
 Generate:
 

@@ -22,7 +22,11 @@ export async function GET(request: NextRequest) {
       .limit(limit);
 
     if (role) query = query.eq("role", role);
-    if (q) query = query.or(`display_name.ilike.%${q}%,email.ilike.%${q}%`);
+    if (q) {
+      // Sanitize to prevent PostgREST filter injection
+      const safeQ = q.replace(/[(),."'\\]/g, "").slice(0, 100);
+      if (safeQ) query = query.or(`display_name.ilike.%${safeQ}%,email.ilike.%${safeQ}%`);
+    }
 
     const { data, error } = await query;
     if (error) throw new ApiError(500, error.message);

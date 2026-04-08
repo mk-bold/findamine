@@ -63,7 +63,7 @@ export async function GET(
 
     const { data: ratings } = await supabase
       .from("hunt_ratings")
-      .select("rating, review_text, created_at, users(display_name)")
+      .select("rating, review_text, created_at")
       .eq("hunt_id", id)
       .order("created_at", { ascending: false })
       .limit(50);

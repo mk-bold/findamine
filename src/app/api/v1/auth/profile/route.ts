@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
     requireRole(user);
 
     const body = await request.json();
-    const allowedFields = ["display_name", "avatar_url", "metadata"];
+    const allowedFields = ["display_name", "avatar_url", "metadata", "profile_visibility"];
     const updates: Record<string, unknown> = {};
 
     for (const field of allowedFields) {

@@ -37,6 +37,9 @@ export function sanitizeForPrompt(input: unknown, maxLength = 500): string {
     .replace(/\n/g, " ")
     .replace(/[{}[\]]/g, "")
     .replace(/--/g, "- ")
+    .replace(/`/g, "'")
+    .replace(/#{1,6}\s/g, "")
+    .replace(/<\/?[a-zA-Z][^>]*>/g, "")
     .slice(0, maxLength)
     .trim();
 }

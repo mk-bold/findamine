@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { playLimiter } from "@/lib/utils/rate-limit";
 
 /**
  * 4-level hint system:
@@ -14,6 +15,7 @@ export async function POST(
   { params }: { params: Promise<{ huntId: string }> }
 ) {
   try {
+    await playLimiter.check(request);
     const { huntId } = await params;
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");

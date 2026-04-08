@@ -46,6 +46,7 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <AdminLink href="/admin/security" title="Security &amp; Threats" desc="Threat detection, IP blocking, and traffic analysis" />
         <AdminLink href="/admin/users" title="User Management" desc="View and manage user accounts and roles" />
         <AdminLink href="/admin/moderation" title="Moderation Queue" desc="Review flagged content and reports" />
         <AdminLink href="/admin/research" title="Research Studies" desc="Manage treatment studies and dimensions" />

@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 // Batch insert behavioral events (L1)
 export async function POST(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
 

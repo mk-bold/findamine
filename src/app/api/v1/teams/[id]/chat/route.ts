@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { socialLimiter } from "@/lib/utils/rate-limit";
 
 export async function GET(
   request: NextRequest,
@@ -48,6 +49,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await socialLimiter.check(request);
     const { id } = await params;
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
@@ -58,6 +60,17 @@ export async function POST(
     }
 
     const supabase = await createSupabaseServiceClient();
+
+    // Verify user is a member of this team
+    if (!["admin", "researcher"].includes(user.role)) {
+      const { data: membership } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!membership) throw new ApiError(403, "Not a member of this team");
+    }
 
     const { data: msg, error } = await supabase
       .from("team_messages")

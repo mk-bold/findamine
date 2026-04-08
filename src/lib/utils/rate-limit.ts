@@ -116,7 +116,7 @@ function createRateLimiter(opts: {
         });
       }
 
-      const key = getIp(request);
+      const key = getCompositeKey(request);
       const result = await _limiter.limit(key);
       if (!result.success) {
         const retryAfterSec = Math.ceil((result.reset - Date.now()) / 1000);
@@ -144,6 +144,24 @@ export const aiLimiter = createRateLimiter({
 
 export const generalLimiter = createRateLimiter({
   max: 100,
-  windowMs: 60 * 1000, // 100 requests per minute per IP
+  windowMs: 60 * 1000, // 100 requests per minute per user+IP
   prefix: "general",
+});
+
+export const socialLimiter = createRateLimiter({
+  max: 30,
+  windowMs: 60 * 1000, // 30 requests per minute per user+IP
+  prefix: "social",
+});
+
+export const playLimiter = createRateLimiter({
+  max: 60,
+  windowMs: 60 * 1000, // 60 requests per minute per user+IP
+  prefix: "play",
+});
+
+export const uploadLimiter = createRateLimiter({
+  max: 10,
+  windowMs: 60 * 1000, // 10 uploads per minute per user+IP
+  prefix: "upload",
 });

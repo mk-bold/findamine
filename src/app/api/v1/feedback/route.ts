@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, requireRole, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { generalLimiter } from "@/lib/utils/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await generalLimiter.check(request);
     const user = await getAuthUser(request);
     requireRole(user, "teacher", "admin");
 

@@ -11,8 +11,22 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("user_id") || user.id;
 
     // Only teachers/admins can view other users' accommodations
-    if (userId !== user.id && !["teacher", "parent", "admin", "researcher"].includes(user.role)) {
-      throw new ApiError(403, "Cannot view other users' accommodations");
+    if (userId !== user.id && !["teacher", "admin", "researcher"].includes(user.role)) {
+      if (user.role === "parent") {
+        // Parents can only view their own children's accommodations
+        const supabaseCheck = await createSupabaseServiceClient();
+        const { data: child } = await supabaseCheck
+          .from("users")
+          .select("id")
+          .eq("id", userId)
+          .eq("parent_id", user.id)
+          .maybeSingle();
+        if (!child) {
+          throw new ApiError(403, "Cannot view accommodations for a user who is not your child");
+        }
+      } else {
+        throw new ApiError(403, "Cannot view other users' accommodations");
+      }
     }
 
     const supabase = await createSupabaseServiceClient();

@@ -13,7 +13,21 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const user = await getAuthUser(request);
+    if (!user) throw new ApiError(401, "Not authenticated");
+
     const supabase = await createSupabaseServiceClient();
+
+    // Check if hunt is draft — only owner/admin can see draft hunt finds
+    const { data: hunt } = await supabase
+      .from("hunts")
+      .select("status, created_by")
+      .eq("id", id)
+      .single();
+
+    if (hunt?.status === "draft" && hunt.created_by !== user.id && !["admin", "researcher"].includes(user.role)) {
+      throw new ApiError(404, "Hunt not found");
+    }
 
     const { data: finds, error } = await supabase
       .from("finds")

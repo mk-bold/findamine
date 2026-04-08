@@ -3,6 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { calculateScore, getGrowthMindsetMessage } from "@/lib/services/scoring";
 import { logger } from "@/lib/utils/logger";
+import { playLimiter } from "@/lib/utils/rate-limit";
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +11,7 @@ export async function POST(
 ) {
   const start = performance.now();
   try {
+    await playLimiter.check(request);
     const { huntId } = await params;
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");

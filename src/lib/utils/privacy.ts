@@ -149,3 +149,29 @@ export function canView(
   const requiredLevel = levels.indexOf(fieldVisibility);
   return viewerLevel >= requiredLevel;
 }
+
+/**
+ * Strip profile fields the viewer should not see based on the target user's
+ * profile_visibility settings. Returns a new object with hidden fields removed.
+ *
+ * @param profile - The user profile object (must include profile_visibility)
+ * @param viewerRelationship - The viewer's relationship to the profile owner
+ */
+export function filterProfileForViewer(
+  profile: { display_name?: string | null; avatar_url?: string | null; profile_visibility?: Record<string, string> },
+  viewerRelationship: "self" | "team" | "class" | "public"
+): { display_name: string | null; avatar_url: string | null } {
+  if (viewerRelationship === "self") {
+    return { display_name: profile.display_name ?? null, avatar_url: profile.avatar_url ?? null };
+  }
+
+  const vis = profile.profile_visibility || {};
+
+  const displayNameLevel = (vis.display_name as VisibilityLevel) || "everyone";
+  const avatarLevel = (vis.avatar as VisibilityLevel) || "everyone";
+
+  return {
+    display_name: canView(viewerRelationship, displayNameLevel) ? (profile.display_name ?? null) : null,
+    avatar_url: canView(viewerRelationship, avatarLevel) ? (profile.avatar_url ?? null) : null,
+  };
+}

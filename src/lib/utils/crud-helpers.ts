@@ -30,6 +30,9 @@ export function createCrudHandlers(
 
   async function GET(request: NextRequest) {
     try {
+      const user = await getAuthUser(request);
+      if (!user) throw new ApiError(401, "Not authenticated");
+
       const { searchParams } = new URL(request.url);
       const library = searchParams.get("library");
       const limit = parseInt(searchParams.get("limit") || "100");
@@ -91,11 +94,13 @@ export function createItemHandlers(
   options: {
     writeRoles?: UserRole[];
     allowedUpdateFields: string[];
+    ownerColumn?: string;
   }
 ) {
   const {
     writeRoles = ["teacher", "hunt_creator", "admin", "researcher"],
     allowedUpdateFields,
+    ownerColumn = "created_by",
   } = options;
 
   async function GET(
@@ -103,6 +108,9 @@ export function createItemHandlers(
     { params }: { params: Promise<{ id: string }> }
   ) {
     try {
+      const user = await getAuthUser(request);
+      if (!user) throw new ApiError(401, "Not authenticated");
+
       const { id } = await params;
       const supabase = await createSupabaseServiceClient();
 
@@ -163,6 +171,20 @@ export function createItemHandlers(
       requireRole(user, ...writeRoles);
 
       const supabase = await createSupabaseServiceClient();
+
+      // Verify ownership (admins/researchers can delete anything)
+      if (!["admin", "researcher"].includes(user.role)) {
+        const { data: existing } = await supabase
+          .from(table)
+          .select(ownerColumn)
+          .eq("id", id)
+          .single();
+
+        if (!existing) throw new ApiError(404, "Not found");
+        if ((existing as unknown as Record<string, unknown>)[ownerColumn] !== user.id) {
+          throw new ApiError(403, "Not authorized to delete this item");
+        }
+      }
 
       const { error } = await supabase
         .from(table)

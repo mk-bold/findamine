@@ -116,6 +116,21 @@ export async function DELETE(
 
     const supabase = await createSupabaseServiceClient();
 
+    // Verify ownership
+    const { data: existing } = await supabase
+      .from("hunts")
+      .select("created_by")
+      .eq("id", id)
+      .single();
+
+    if (!existing) throw new ApiError(404, "Hunt not found");
+    if (
+      existing.created_by !== user.id &&
+      !["admin", "researcher"].includes(user.role)
+    ) {
+      throw new ApiError(403, "Not authorized to delete this hunt");
+    }
+
     // Soft delete
     const { error } = await supabase
       .from("hunts")
