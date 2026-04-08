@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { MapPin, Clock, Users, Search, Compass } from "lucide-react";
 
 const HERO_IMAGES = [
   "/hero-public.png",
@@ -10,6 +11,14 @@ const HERO_IMAGES = [
   "/hero-teen.png",
   "/hero-primary.png",
 ];
+
+const AUDIENCE_ICONS: Record<string, string> = {
+  kids: "🌟",
+  teens: "⚡",
+  adults: "🎯",
+  family: "🏡",
+  all: "🌍",
+};
 
 export default async function BrowseHuntsPage({
   searchParams,
@@ -39,85 +48,121 @@ export default async function BrowseHuntsPage({
   const { data: hunts } = await query;
 
   return (
-    <main>
-      {/* Hero strip */}
+    <main className="min-h-screen bg-[#FEFCF6]">
+      {/* Hero strip with parallax feel */}
       <div
-        className="relative w-full h-16 sm:h-20 flex items-center justify-center overflow-hidden mb-4"
+        className="relative w-full h-28 sm:h-36 flex items-end overflow-hidden"
         style={{
           backgroundImage: `url(${heroImage})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center 40%",
         }}
       >
-        <div className="absolute inset-0 bg-black/50" />
-        <h1 className="relative text-white text-lg sm:text-xl font-semibold tracking-wide drop-shadow-md">
-          Browse Hunts
-        </h1>
-      </div>
-
-      <div className="mx-auto max-w-4xl px-4">
-      <div className="flex items-center justify-between mb-3">
-        <div />
-        <Link href="/browse/standards" className="text-xs text-sky-600 hover:underline">
-          Browse by Standard →
-        </Link>
-      </div>
-      <form className="flex gap-2 mb-4">
-        <input
-          name="q"
-          type="search"
-          defaultValue={params.q}
-          placeholder="Search hunts..."
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-        />
-        <select
-          name="audience"
-          defaultValue={params.audience}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
-          <option value="">All audiences</option>
-          <option value="kids">Kids</option>
-          <option value="teens">Teens</option>
-          <option value="adults">Adults</option>
-          <option value="family">Family</option>
-        </select>
-        <button
-          type="submit"
-          className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-2 text-sm font-medium"
-        >
-          Search
-        </button>
-      </form>
-
-      {!hunts || hunts.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">
-          No hunts found. {params.q && "Try a different search term."}
-        </p>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {hunts.map((hunt) => (
-            <Link
-              key={hunt.id}
-              href={`/browse/${hunt.id}`}
-              className="block rounded-lg border border-gray-200 bg-white p-3.5 hover:border-sky-200 hover:shadow-sm transition-all"
-            >
-              <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{hunt.title}</h3>
-              {hunt.description && (
-                <p className="text-xs text-gray-500 line-clamp-2 mb-2">{hunt.description}</p>
-              )}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 text-[11px]">
-                  {hunt.target_audience}
-                </span>
-                <span className="text-[11px]">{hunt.play_mode.replace(/_/g, " ")}</span>
-                {hunt.estimated_duration_min && (
-                  <span className="text-[11px]">{hunt.estimated_duration_min} min</span>
-                )}
-              </div>
-            </Link>
-          ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#FEFCF6] via-black/30 to-transparent" />
+        <div className="relative mx-auto max-w-4xl w-full px-4 pb-4">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-brand" />
+            <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-gray-900">
+              Discover Adventures
+            </h1>
+          </div>
         </div>
-      )}
+      </div>
+
+      <div className="mx-auto max-w-4xl px-4 -mt-1">
+        {/* Search bar */}
+        <form className="flex gap-2 mb-6 bg-white rounded-2xl border border-themed-border shadow-sm p-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              name="q"
+              type="search"
+              defaultValue={params.q}
+              placeholder="Search hunts by name, topic, or location..."
+              className="w-full rounded-xl bg-gray-50 pl-9 pr-3 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 transition-all"
+            />
+          </div>
+          <select
+            name="audience"
+            defaultValue={params.audience}
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+          >
+            <option value="">All ages</option>
+            <option value="kids">🌟 Kids</option>
+            <option value="teens">⚡ Teens</option>
+            <option value="adults">🎯 Adults</option>
+            <option value="family">🏡 Family</option>
+          </select>
+          <button
+            type="submit"
+            className="rounded-xl bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark shadow-sm transition-colors"
+          >
+            Search
+          </button>
+        </form>
+
+        {/* Browse by standards link */}
+        <div className="flex justify-end mb-4">
+          <Link href="/browse/standards" className="text-xs text-brand hover:underline font-medium">
+            Browse by Standard &rarr;
+          </Link>
+        </div>
+
+        {/* Results */}
+        {!hunts || hunts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="font-[family-name:var(--font-handwritten)] text-4xl text-gray-300 mb-2">
+              No adventures found
+            </div>
+            <p className="text-sm text-gray-500">
+              {params.q ? "Try a different search term." : "Check back soon for new hunts!"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-8">
+            {hunts.map((hunt) => (
+              <Link
+                key={hunt.id}
+                href={`/browse/${hunt.id}`}
+                className="group block rounded-2xl border border-gray-100/80 bg-white p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              >
+                {/* Audience emoji badge */}
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-2xl" title={hunt.target_audience}>
+                    {AUDIENCE_ICONS[hunt.target_audience] || "🌍"}
+                  </span>
+                  <span className="rounded-full bg-brand/10 text-brand px-2.5 py-0.5 text-[11px] font-semibold">
+                    {hunt.target_audience}
+                  </span>
+                </div>
+
+                <h3 className="font-[family-name:var(--font-display)] font-semibold text-gray-900 mb-1 group-hover:text-brand transition-colors">
+                  {hunt.title}
+                </h3>
+                {hunt.description && (
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-3">{hunt.description}</p>
+                )}
+
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {hunt.play_mode.replace(/_/g, " ")}
+                  </span>
+                  {hunt.estimated_duration_min && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {hunt.estimated_duration_min} min
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    GPS
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

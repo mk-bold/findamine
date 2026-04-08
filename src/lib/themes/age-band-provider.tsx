@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { type AgeBand, THEME_TOKENS, tokensToCssVars } from "./tokens";
 
+const VALID_BANDS: AgeBand[] = ["primary", "intermediate", "teen", "adult"];
+
 interface AgeBandContextValue {
   band: AgeBand;
   setBand: (band: AgeBand) => void;
@@ -26,6 +28,15 @@ export function AgeBandProvider({
 }) {
   const [band, setBand] = useState<AgeBand>(initialBand);
 
+  // Support ?band= URL parameter for previewing age bands
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const override = params.get("band") as AgeBand | null;
+    if (override && VALID_BANDS.includes(override)) {
+      setBand(override);
+    }
+  }, []);
+
   useEffect(() => {
     // Set data attribute on html element
     document.documentElement.setAttribute("data-age-band", band);
@@ -37,8 +48,6 @@ export function AgeBandProvider({
     }
 
     // Set font family only — do NOT set root font-size here.
-    // Changing root font-size breaks all Tailwind rem-based utilities (spacing, sizing).
-    // The --font-size-base CSS variable is available for components that need age-appropriate text.
     document.documentElement.style.fontFamily = THEME_TOKENS[band].fontFamily;
   }, [band]);
 
