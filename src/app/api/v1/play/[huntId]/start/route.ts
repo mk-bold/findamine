@@ -2,16 +2,23 @@ import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
 import { logger } from "@/lib/utils/logger";
+import { botGuard } from "@/lib/utils/bot-guard";
+import { trackEvent } from "@/lib/utils/track-event";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ huntId: string }> }
 ) {
+  const blocked = await botGuard(request);
+  if (blocked) return blocked;
+
   const start = performance.now();
   try {
     const { huntId } = await params;
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
+
+    trackEvent({ userId: user.id, eventType: "play_start", payload: { hunt_id: huntId } });
 
     logger.info("play.start", { path: `/api/v1/play/${huntId}/start`, userId: user.id });
 

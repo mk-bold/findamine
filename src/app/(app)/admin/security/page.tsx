@@ -71,6 +71,9 @@ export default async function SecurityDashboard() {
           <h1 className="text-lg font-semibold text-gray-900 mt-1">Security Dashboard</h1>
         </div>
         <div className="flex gap-2">
+          <Link href="/admin/security/traffic" className="rounded bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100">
+            Traffic Analysis
+          </Link>
           <Link href="/admin/security/threats" className="rounded bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100">
             Threat Labeler
           </Link>

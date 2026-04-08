@@ -8,8 +8,12 @@ import {
   sanitizeFilterInput,
 } from "@/lib/utils/api-auth";
 import { generalLimiter } from "@/lib/utils/rate-limit";
+import { botGuard } from "@/lib/utils/bot-guard";
 
 export async function GET(request: NextRequest) {
+  const blocked = await botGuard(request);
+  if (blocked) return blocked;
+
   try {
     await generalLimiter.check(request);
     const { searchParams } = new URL(request.url);

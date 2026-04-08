@@ -4,8 +4,14 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/utils/api-auth";
 import { authLimiter } from "@/lib/utils/rate-limit";
 import { withLogging } from "@/lib/utils/with-logging";
+import { botGuard } from "@/lib/utils/bot-guard";
+import { trackEvent } from "@/lib/utils/track-event";
+import { getIpHash } from "@/lib/utils/bot-detector";
 
 export const POST = withLogging("POST /api/v1/auth/login", async (request: NextRequest) => {
+  const blocked = await botGuard(request);
+  if (blocked) return blocked;
+
   await authLimiter.check(request);
   const body = await request.json();
   const { email, password } = body;
@@ -29,6 +35,11 @@ export const POST = withLogging("POST /api/v1/auth/login", async (request: NextR
     });
 
     if (error) {
+      const ipHash = getIpHash(request);
+      trackEvent({ eventType: "login_attempt", eventName: "Failed login (mobile)", payload: { success: false, ip_hash: ipHash, email } });
+      // Also log to login_attempts table
+      const svc = await createSupabaseServiceClient();
+      svc.from("login_attempts").insert({ email, success: false, ip_hash: ipHash, user_agent: request.headers.get("user-agent") });
       throw new ApiError(401, "Invalid email or password");
     }
 
@@ -39,6 +50,8 @@ export const POST = withLogging("POST /api/v1/auth/login", async (request: NextR
       .eq("auth_id", data.user.id)
       .is("deleted_at", null)
       .single();
+
+    trackEvent({ userId: profile?.id, eventType: "login_attempt", eventName: "Successful login (mobile)", payload: { success: true } });
 
     return Response.json({
       session: {
@@ -76,6 +89,10 @@ export const POST = withLogging("POST /api/v1/auth/login", async (request: NextR
   });
 
   if (error) {
+    const ipHash = getIpHash(request);
+    trackEvent({ eventType: "login_attempt", eventName: "Failed login (web)", payload: { success: false, ip_hash: ipHash, email } });
+    const svc = await createSupabaseServiceClient();
+    svc.from("login_attempts").insert({ email, success: false, ip_hash: ipHash, user_agent: request.headers.get("user-agent") });
     throw new ApiError(401, "Invalid email or password");
   }
 
@@ -86,6 +103,8 @@ export const POST = withLogging("POST /api/v1/auth/login", async (request: NextR
     .eq("auth_id", data.user.id)
     .is("deleted_at", null)
     .single();
+
+  trackEvent({ userId: profile?.id, eventType: "login_attempt", eventName: "Successful login (web)", payload: { success: true } });
 
   return Response.json({ user: profile });
 });

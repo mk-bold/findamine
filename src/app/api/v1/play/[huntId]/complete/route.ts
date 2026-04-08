@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getAuthUser, errorResponse, ApiError } from "@/lib/utils/api-auth";
+import { trackEvent } from "@/lib/utils/track-event";
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +11,8 @@ export async function POST(
     const { huntId } = await params;
     const user = await getAuthUser(request);
     if (!user) throw new ApiError(401, "Not authenticated");
+
+    trackEvent({ userId: user.id, eventType: "play_complete", payload: { hunt_id: huntId } });
 
     const supabase = await createSupabaseServiceClient();
 

@@ -3,8 +3,13 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/utils/api-auth";
 import { authLimiter } from "@/lib/utils/rate-limit";
 import { withLogging } from "@/lib/utils/with-logging";
+import { botGuard } from "@/lib/utils/bot-guard";
+import { trackEvent } from "@/lib/utils/track-event";
 
 export const POST = withLogging("POST /api/v1/auth/register", async (request: NextRequest) => {
+  const blocked = await botGuard(request);
+  if (blocked) return blocked;
+
   await authLimiter.check(request);
   const body = await request.json();
   const { email, password, display_name, role, date_of_birth } = body;
