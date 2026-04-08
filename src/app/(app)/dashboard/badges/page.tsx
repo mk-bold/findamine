@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Award } from "lucide-react";
 
 interface BadgeProgress {
   id: string;
@@ -39,31 +40,33 @@ export default function BadgesPage() {
     return true;
   });
 
-  // Group by category
   const categories = [...new Set(filtered.map((b) => b.category))].sort();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-4">
+    <main className="mx-auto max-w-4xl px-4 py-6">
       <Link href="/dashboard" className="text-sm text-brand hover:underline mb-4 inline-block">
         &larr; Dashboard
       </Link>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-base font-semibold text-gray-900">My Badges</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Award className="w-6 h-6 text-amber-500" />
+            My Badges
+          </h1>
+          <p className="font-[family-name:var(--font-handwritten)] text-lg text-themed-muted">
             {earnedCount} of {badges.length} earned
           </p>
         </div>
-        <div className="flex rounded-md border border-gray-300 text-sm">
+        <div className="flex rounded-xl border border-gray-200 text-sm overflow-hidden">
           {(["all", "earned", "locked"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1 capitalize ${
+              className={`px-4 py-1.5 capitalize transition-colors ${
                 filter === f
-                  ? "bg-sky-600 text-white"
-                  : "text-gray-700 hover:bg-gray-50"
-              } ${f === "all" ? "rounded-l-md" : f === "locked" ? "rounded-r-md" : ""}`}
+                  ? "bg-brand text-white"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
             >
               {f}
             </button>
@@ -72,39 +75,45 @@ export default function BadgesPage() {
       </div>
 
       {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(9)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-28 bg-gray-100 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
-          {filter === "earned" ? "No badges earned yet. Keep exploring!" : "No badges to show."}
+        <div className="rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
+          <div className="text-4xl mb-3">🔒</div>
+          <p className="font-[family-name:var(--font-display)] font-semibold text-gray-500">
+            {filter === "earned" ? "No badges earned yet" : "No badges to show"}
+          </p>
+          <p className="font-[family-name:var(--font-handwritten)] text-lg text-gray-400 mt-1">
+            Keep exploring to unlock achievements!
+          </p>
         </div>
       ) : (
         categories.map((category) => (
-          <div key={category} className="mb-6">
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <div key={category} className="mb-8">
+            <h2 className="font-[family-name:var(--font-display)] text-sm font-semibold text-themed-muted uppercase tracking-wider mb-3">
               {category.replace(/_/g, " ")}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered
                 .filter((b) => b.category === category)
                 .map((badge) => (
                   <div
                     key={badge.id}
-                    className={`rounded-lg border p-4 transition-all ${
+                    className={`rounded-2xl border p-4 transition-all duration-300 ${
                       badge.earned
-                        ? "border-sky-200 bg-sky-50/50"
-                        : "border-gray-200 bg-white opacity-60"
+                        ? "border-brand-light bg-gradient-to-br from-white to-brand-light/20 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                        : "border-gray-200 bg-white opacity-50"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 ${
-                        badge.earned ? "bg-sky-100" : "bg-gray-100"
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${
+                        badge.earned ? "bg-gradient-to-br from-amber-100 to-amber-200 shadow-sm" : "bg-gray-100"
                       }`}>
                         {badge.icon_url ? (
-                          <img src={badge.icon_url} alt="" className="w-7 h-7" />
+                          <img src={badge.icon_url} alt="" className="w-8 h-8" />
                         ) : badge.earned ? (
                           "⭐"
                         ) : (
@@ -112,12 +121,12 @@ export default function BadgesPage() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-sm font-medium ${badge.earned ? "text-gray-900" : "text-gray-500"}`}>
+                        <p className={`font-[family-name:var(--font-display)] text-sm font-semibold ${badge.earned ? "text-gray-900" : "text-gray-400"}`}>
                           {badge.display_name}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">{badge.description}</p>
                         {badge.earned && badge.earned_at && (
-                          <p className="text-[10px] text-sky-600 mt-1">
+                          <p className="text-[10px] text-brand font-medium mt-1.5">
                             Earned {new Date(badge.earned_at).toLocaleDateString()}
                           </p>
                         )}

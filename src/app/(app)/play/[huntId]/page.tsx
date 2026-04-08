@@ -425,25 +425,25 @@ export default function PlayPage() {
           onComplete={() => setShowCelebration(false)}
         />
 
-        <div className="bg-surface border border-themed-border rounded-xl p-8 text-center">
-          <div className="text-5xl mb-4">🏆</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hunt Complete!</h1>
-          <p className="text-gray-500 mb-8">You finished all {finds.length} stops</p>
+        <div className="bg-white rounded-2xl border border-themed-border shadow-lg p-8 text-center">
+          <div className="text-6xl mb-4">🏆</div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold text-gray-900 mb-2">Hunt Complete!</h1>
+          <p className="font-[family-name:var(--font-handwritten)] text-xl text-themed-muted mb-8">You finished all {finds.length} stops</p>
 
           {huntSummary && (
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="rounded-lg bg-sky-50 p-4">
-                <div className="text-3xl font-bold text-brand">{huntSummary.totalScore}</div>
+              <div className="rounded-2xl bg-gradient-to-br from-sky-50 to-blue-50 p-5 border border-sky-100">
+                <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-brand">{huntSummary.totalScore}</div>
                 <div className="text-xs text-gray-500 mt-1">Total Points</div>
               </div>
-              <div className="rounded-lg bg-green-50 p-4">
-                <div className="text-3xl font-bold text-green-600">
+              <div className="rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 p-5 border border-green-100">
+                <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-green-600">
                   {huntSummary.findsCompleted}/{huntSummary.totalFinds}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Stops Completed</div>
+                <div className="text-xs text-gray-500 mt-1">Stops Done</div>
               </div>
-              <div className="rounded-lg bg-purple-50 p-4">
-                <div className="text-3xl font-bold text-purple-600">
+              <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50 p-5 border border-purple-100">
+                <div className="font-[family-name:var(--font-display)] text-3xl font-bold text-purple-600">
                   {elapsed !== null ? `${elapsed}m` : "--"}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Time</div>
@@ -494,24 +494,28 @@ export default function PlayPage() {
       )}
 
       {/* Progress bar */}
-      <div className="flex justify-between text-sm text-gray-500 mb-1">
-        <span>Stop {currentIndex + 1} of {finds.length}</span>
-        <span>{totalCompleted}/{finds.length} completed</span>
+      <div className="flex justify-between text-sm mb-1.5">
+        <span className="font-[family-name:var(--font-display)] font-semibold text-gray-800">
+          Stop {currentIndex + 1} of {finds.length}
+        </span>
+        <span className="font-[family-name:var(--font-handwritten)] text-lg text-brand">
+          {totalCompleted}/{finds.length} done
+        </span>
       </div>
-      <div className="h-2 rounded-full bg-gray-200 mb-4" role="progressbar" aria-valuenow={totalCompleted} aria-valuemin={0} aria-valuemax={finds.length} aria-label={`Hunt progress: ${totalCompleted} of ${finds.length} stops completed`}>
+      <div className="h-3 rounded-full bg-gray-100 mb-4 overflow-hidden shadow-inner" role="progressbar" aria-valuenow={totalCompleted} aria-valuemin={0} aria-valuemax={finds.length} aria-label={`Hunt progress: ${totalCompleted} of ${finds.length} stops completed`}>
         <div
-          className="h-2 rounded-full bg-brand transition-[width] duration-300"
+          className="h-3 rounded-full bg-gradient-to-r from-brand via-brand-dark to-brand transition-[width] duration-500 ease-out"
           style={{ width: `${(totalCompleted / finds.length) * 100}%` }}
         />
       </div>
 
       <StopFlowStepper currentStep={step} />
 
-      <div className="bg-surface border border-themed-border rounded-xl mb-6 min-h-[300px]" aria-live="polite">
+      <div className="bg-white rounded-2xl border border-themed-border shadow-sm mb-6 min-h-[300px] p-5" aria-live="polite">
         {/* ── PRIME ── */}
         {step === "prime" && currentFind?.primers && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">Before You Start</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-gray-900 mb-3">Before You Start</h2>
             <div className="rounded-lg bg-blue-50 p-4 mb-4">
               <h3 className="font-medium text-blue-800 mb-2">
                 {(currentFind.primers as { title: string }).title}
@@ -527,7 +531,7 @@ export default function PlayPage() {
         {/* ── READING CHECK ── */}
         {step === "reading_check" && currentFind?.reading_check && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Comprehension Check</h2>
+            <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-gray-900 mb-2">Comprehension Check</h2>
             <p className="text-xs text-gray-500 mb-3">Answer these questions about the primer before continuing.</p>
 
             <div className="space-y-3 mb-4">
@@ -875,7 +879,7 @@ export default function PlayPage() {
 
             {score !== null && !huntMeta.hide_scores && (
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-brand">{score}</div>
+                <div className="font-[family-name:var(--font-display)] text-5xl font-bold text-brand">{score}</div>
                 <p className="text-sm text-gray-500">points earned</p>
               </div>
             )}

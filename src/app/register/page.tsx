@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { MapPin } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -65,116 +67,130 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">findamine</h1>
-          <p className="mt-2 text-gray-600">Create your account</p>
+    <main className="flex min-h-screen items-center justify-center bg-[#FEFCF6] px-4 py-8">
+      <div className="w-full max-w-sm">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block mb-4">
+            <Image src="/logo-findamine.png" alt="findamine" width={160} height={40} className="h-auto mx-auto" style={{ objectFit: "contain" }} />
+          </Link>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-gray-900">
+            Join the Adventure
+          </h1>
+          <p className="font-[family-name:var(--font-handwritten)] text-lg text-gray-500 mt-1">
+            Create your explorer account <MapPin className="w-4 h-4 inline text-amber-500" />
+          </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+        {/* Form card */}
+        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
+          <form onSubmit={handleRegister} className="space-y-4">
+            {error && (
+              <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
-          <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-              Display name
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              required
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-              I am a...
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            >
-              <option value="parent">Parent</option>
-              <option value="teacher">Teacher</option>
-              <option value="teen">Teen (13+)</option>
-            </select>
-          </div>
-
-          {role === "teen" && (
             <div>
-              <label htmlFor="dob" className="block text-sm font-medium text-gray-700">
-                Date of birth
+              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
+                Explorer name
               </label>
               <input
-                id="dob"
-                type="date"
+                id="displayName"
+                type="text"
                 required
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                placeholder="Your display name"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                You must be 13 or older to create your own account.
-              </p>
             </div>
-          )}
 
-          <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
-            <strong>Under 13?</strong> A parent or teacher needs to create your account.
-            Ask them to sign up and add you from their dashboard.
-          </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                placeholder="you@example.com"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading || (role === "teen" && !dateOfBirth)}
-            className="w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
-          >
-            {loading ? "Creating account..." : "Create account"}
-          </button>
-        </form>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                placeholder="At least 6 characters"
+              />
+            </div>
 
-        <p className="text-center text-sm text-gray-600">
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                I am a...
+              </label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+              >
+                <option value="parent">Parent</option>
+                <option value="teacher">Teacher</option>
+                <option value="teen">Teen (13+)</option>
+              </select>
+            </div>
+
+            {role === "teen" && (
+              <div>
+                <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of birth
+                </label>
+                <input
+                  id="dob"
+                  type="date"
+                  required
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
+                  className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:bg-white focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                />
+                <p className="mt-1.5 text-xs text-gray-500">
+                  You must be 13 or older to create your own account.
+                </p>
+              </div>
+            )}
+
+            <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 text-xs text-amber-800">
+              <strong>Under 13?</strong> A parent or teacher needs to create your account.
+              Ask them to sign up and add you from their dashboard.
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || (role === "teen" && !dateOfBirth)}
+              className="w-full rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark hover:shadow-md disabled:opacity-50 transition-all"
+            >
+              {loading ? "Creating account..." : "Start Exploring"}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-5">
           Already have an account?{" "}
-          <Link href="/login" className="text-sky-600 hover:underline">
+          <Link href="/login" className="text-brand hover:underline font-medium">
             Sign in
           </Link>
         </p>

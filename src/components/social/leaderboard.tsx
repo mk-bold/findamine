@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Trophy } from "lucide-react";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -36,13 +37,9 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
     fetchLeaderboard();
   }, [huntId]);
 
-  // Real-time: listen for play_session completions to refresh
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-
-    const filter = huntId
-      ? `hunt_id=eq.${huntId}`
-      : undefined;
+    const filter = huntId ? `hunt_id=eq.${huntId}` : undefined;
 
     const channel = supabase
       .channel("leaderboard-updates")
@@ -55,7 +52,6 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
           ...(filter ? { filter } : {}),
         },
         (payload) => {
-          // Refresh when a session is completed or score changes
           if (payload.new.status === "completed" || payload.new.total_score !== payload.old?.total_score) {
             fetchLeaderboard();
           }
@@ -63,64 +59,84 @@ export default function Leaderboard({ huntId }: LeaderboardProps) {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [huntId]);
 
   const medals = ["🥇", "🥈", "🥉"];
+  const podiumColors = [
+    "from-amber-50 to-yellow-50 border-amber-200",
+    "from-gray-50 to-slate-50 border-gray-200",
+    "from-orange-50 to-amber-50 border-orange-200",
+  ];
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
-      <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-gray-900">
-          {huntId ? "Hunt Leaderboard" : "Overall Leaderboard"}
+    <div className="rounded-2xl border border-themed-border bg-white overflow-hidden">
+      <div className="border-b border-gray-100 px-5 py-3 flex items-center justify-between bg-gradient-to-r from-brand-light/30 to-transparent">
+        <h3 className="font-[family-name:var(--font-display)] font-semibold text-gray-900 flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-amber-500" />
+          {huntId ? "Hunt Leaderboard" : "Leaderboard"}
         </h3>
-        <span className="text-xs text-green-600 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+        <span className="text-xs text-green-600 flex items-center gap-1.5 font-medium">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Live
         </span>
       </div>
 
       {loading ? (
-        <div className="p-4 space-y-2">
+        <div className="p-5 space-y-3">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="w-6 h-6 rounded-full bg-gray-100" />
-              <div className="h-4 bg-gray-100 rounded flex-1" />
-              <div className="h-4 bg-gray-100 rounded w-12" />
+              <div className="w-8 h-8 rounded-full bg-gray-100" />
+              <div className="h-4 bg-gray-100 rounded-lg flex-1" />
+              <div className="h-4 bg-gray-100 rounded-lg w-14" />
             </div>
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p className="p-8 text-center text-sm text-gray-500">No scores yet. Be the first!</p>
+        <div className="p-10 text-center">
+          <div className="text-3xl mb-2">🏅</div>
+          <p className="font-[family-name:var(--font-display)] font-semibold text-gray-500">No scores yet</p>
+          <p className="font-[family-name:var(--font-handwritten)] text-lg text-gray-400">Be the first explorer!</p>
+        </div>
       ) : (
         <div className="divide-y divide-gray-50">
           {entries.map((entry, i) => (
-            <div key={entry.user_id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+            <div
+              key={entry.user_id}
+              className={`flex items-center gap-3 px-5 py-3 transition-colors hover:bg-gray-50/50 ${
+                i < 3 ? `bg-gradient-to-r ${podiumColors[i]}` : ""
+              }`}
+            >
               {/* Rank */}
-              <div className="w-7 text-center shrink-0">
+              <div className="w-8 text-center shrink-0">
                 {i < 3 ? (
-                  <span className="text-lg">{medals[i]}</span>
+                  <span className="text-xl">{medals[i]}</span>
                 ) : (
-                  <span className="text-xs font-medium text-gray-500">{i + 1}</span>
+                  <span className="font-[family-name:var(--font-display)] text-sm font-bold text-gray-400">{i + 1}</span>
                 )}
+              </div>
+
+              {/* Avatar */}
+              <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
+                <span className="font-[family-name:var(--font-display)] text-xs font-bold text-brand">
+                  {(entry.display_name || "?")[0].toUpperCase()}
+                </span>
               </div>
 
               {/* Name */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="font-[family-name:var(--font-display)] text-sm font-semibold text-gray-900 truncate">
                   {entry.display_name || "Anonymous"}
                 </p>
                 {entry.hunts_completed != null && (
-                  <p className="text-xs text-gray-500">{entry.hunts_completed} hunts</p>
+                  <p className="text-xs text-gray-400">{entry.hunts_completed} hunts</p>
                 )}
               </div>
 
               {/* Score */}
               <div className="text-right shrink-0">
-                <span className="text-sm font-bold text-sky-600">{entry.score}</span>
-                <span className="text-xs text-gray-500 ml-1">pts</span>
+                <span className="font-[family-name:var(--font-display)] text-base font-bold text-brand">{entry.score}</span>
+                <span className="text-[10px] text-gray-400 ml-1">pts</span>
               </div>
             </div>
           ))}
