@@ -8,6 +8,12 @@
 @import "@fontsource/nunito/700.css";
 @import "@fontsource/dm-sans/400.css";
 @import "@fontsource/dm-sans/500.css";
+@import "@fontsource/fredoka/400.css";
+@import "@fontsource/fredoka/500.css";
+@import "@fontsource/fredoka/600.css";
+@import "@fontsource/fredoka/700.css";
+@import "@fontsource/caveat/400.css";
+@import "@fontsource/caveat/700.css";
 
 /* ─── Tailwind v4 Theme: Age-Band Colors ────────────────────
    These map CSS custom properties (set by AgeBandProvider) to
@@ -16,6 +22,7 @@
    Colors change automatically per age band.
 */
 @theme {
+  /* Age-band-aware colors (change automatically per user) */
   --color-brand: var(--color-primary, #0EA5E9);
   --color-brand-light: var(--color-primary-light, #BAE6FD);
   --color-brand-dark: var(--color-primary-dark, #0284C7);
@@ -29,6 +36,11 @@
   --color-success: var(--color-success, #22C55E);
   --color-warning: var(--color-warning, #F97316);
   --color-error: var(--color-error, #EF4444);
+
+  /* Adventure-themed fonts */
+  --font-display: 'Fredoka', 'Nunito', sans-serif;
+  --font-handwritten: 'Caveat', cursive;
+  --font-body: var(--font-family, 'Inter', system-ui, sans-serif);
 }
 
 /* ─── Base ──────────────────────────────────────────────────── */
