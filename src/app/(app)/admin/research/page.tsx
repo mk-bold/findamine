@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function ResearchPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-4">
-      <Link href="/admin" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
+      <Link href="/admin" className="text-sm text-brand hover:underline mb-4 inline-block">
         &larr; Admin
       </Link>
       <h1 className="text-lg font-semibold text-gray-900 mb-2">Research Studies</h1>

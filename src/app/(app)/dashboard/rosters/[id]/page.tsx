@@ -83,7 +83,7 @@ export default function RosterDetailPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-4">
-      <Link href="/dashboard/rosters" className="text-sm text-themed-primary hover:underline mb-3 inline-block">
+      <Link href="/dashboard/rosters" className="text-sm text-brand hover:underline mb-3 inline-block">
         &larr; All Rosters
       </Link>
 
@@ -112,7 +112,7 @@ export default function RosterDetailPage() {
         <button
           onClick={handleAddMember}
           disabled={adding || !addEmail.trim()}
-          className="btn-primary px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+          className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-1.5 text-sm font-medium disabled:opacity-50"
         >
           {adding ? "Adding..." : "Add Student"}
         </button>
@@ -159,7 +159,7 @@ export default function RosterDetailPage() {
           </p>
           <Link
             href={`/dashboard/rosters/${id}?form_teams=true`}
-            className="btn-primary px-4 py-1.5 text-sm font-medium inline-block"
+            className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-1.5 text-sm font-medium inline-block"
           >
             Form Teams for a Hunt
           </Link>

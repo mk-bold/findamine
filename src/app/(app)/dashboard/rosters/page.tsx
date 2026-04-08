@@ -65,7 +65,7 @@ export default function RostersPage() {
         <button
           onClick={handleCreate}
           disabled={creating || !newName.trim()}
-          className="btn-primary px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+          className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-1.5 text-sm font-medium disabled:opacity-50"
         >
           {creating ? "Creating..." : "Create Roster"}
         </button>

@@ -53,7 +53,7 @@ export default function HuntAnalyticsPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-4">
-      <Link href={`/dashboard/hunts/${id}`} className="text-sm text-themed-primary hover:underline mb-3 inline-block">
+      <Link href={`/dashboard/hunts/${id}`} className="text-sm text-brand hover:underline mb-3 inline-block">
         &larr; Back to hunt
       </Link>
 

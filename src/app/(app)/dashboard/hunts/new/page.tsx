@@ -342,7 +342,7 @@ export default function NewHuntPage() {
             )}
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={loading} className="btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50">
+            <button type="submit" disabled={loading} className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-2 text-sm font-medium disabled:opacity-50">
               {loading ? "Creating..." : "Create Hunt"}
             </button>
             <button type="button" onClick={() => router.back()} className="rounded-md border border-gray-300 px-6 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>

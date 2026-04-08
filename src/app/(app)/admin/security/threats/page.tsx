@@ -18,7 +18,7 @@ export default async function ThreatsPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-4">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/admin/security" className="text-sm text-themed-primary hover:underline">&larr; Security</Link>
+        <Link href="/admin/security" className="text-sm text-brand hover:underline">&larr; Security</Link>
         <h1 className="text-lg font-semibold text-gray-900">Threat Labeler</h1>
       </div>
 

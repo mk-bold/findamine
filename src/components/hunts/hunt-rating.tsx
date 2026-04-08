@@ -94,7 +94,7 @@ export default function HuntRating({ huntId }: HuntRatingProps) {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="btn-primary px-3 py-1 text-xs font-medium disabled:opacity-50"
+                className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-3 py-1 text-xs font-medium disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Submit Rating"}
               </button>

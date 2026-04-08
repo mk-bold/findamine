@@ -67,7 +67,7 @@ export default async function SecurityDashboard() {
     <main className="mx-auto max-w-5xl px-4 py-4">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <Link href="/admin" className="text-sm text-themed-primary hover:underline">&larr; Admin</Link>
+          <Link href="/admin" className="text-sm text-brand hover:underline">&larr; Admin</Link>
           <h1 className="text-lg font-semibold text-gray-900 mt-1">Security Dashboard</h1>
         </div>
         <div className="flex gap-2">

@@ -215,7 +215,7 @@ export default function AssessmentPage() {
       <button
         onClick={handleSubmit}
         disabled={!allAnswered || submitting}
-        className="w-full btn-primary px-6 py-2 text-sm font-medium disabled:opacity-50"
+        className="w-full bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-2 text-sm font-medium disabled:opacity-50"
       >
         {submitting ? "Saving..." : allAnswered ? "See My Results" : `Answer all ${ALL_ITEMS.length - responses.filter(r => r !== null).length} remaining`}
       </button>

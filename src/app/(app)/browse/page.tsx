@@ -83,7 +83,7 @@ export default async function BrowseHuntsPage({
         </select>
         <button
           type="submit"
-          className="btn-primary px-4 py-2 text-sm font-medium"
+          className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-2 text-sm font-medium"
         >
           Search
         </button>

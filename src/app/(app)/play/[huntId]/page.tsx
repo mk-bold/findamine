@@ -425,7 +425,7 @@ export default function PlayPage() {
           onComplete={() => setShowCelebration(false)}
         />
 
-        <div className="card-themed p-8 text-center">
+        <div className="bg-surface border border-themed-border rounded-xl p-8 text-center">
           <div className="text-5xl mb-4">🏆</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hunt Complete!</h1>
           <p className="text-gray-500 mb-8">You finished all {finds.length} stops</p>
@@ -433,7 +433,7 @@ export default function PlayPage() {
           {huntSummary && (
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="rounded-lg bg-sky-50 p-4">
-                <div className="text-3xl font-bold text-themed-primary">{huntSummary.totalScore}</div>
+                <div className="text-3xl font-bold text-brand">{huntSummary.totalScore}</div>
                 <div className="text-xs text-gray-500 mt-1">Total Points</div>
               </div>
               <div className="rounded-lg bg-green-50 p-4">
@@ -454,7 +454,7 @@ export default function PlayPage() {
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => router.push("/dashboard")}
-              className="btn-primary px-6 py-2 text-sm font-medium"
+              className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-2 text-sm font-medium"
             >
               Back to Dashboard
             </button>
@@ -500,14 +500,14 @@ export default function PlayPage() {
       </div>
       <div className="h-2 rounded-full bg-gray-200 mb-4" role="progressbar" aria-valuenow={totalCompleted} aria-valuemin={0} aria-valuemax={finds.length} aria-label={`Hunt progress: ${totalCompleted} of ${finds.length} stops completed`}>
         <div
-          className="h-2 rounded-full progress-fill"
+          className="h-2 rounded-full bg-brand transition-[width] duration-300"
           style={{ width: `${(totalCompleted / finds.length) * 100}%` }}
         />
       </div>
 
       <StopFlowStepper currentStep={step} />
 
-      <div className="card-themed mb-6 min-h-[300px]" aria-live="polite">
+      <div className="bg-surface border border-themed-border rounded-xl mb-6 min-h-[300px]" aria-live="polite">
         {/* ── PRIME ── */}
         {step === "prime" && currentFind?.primers && (
           <div>
@@ -518,7 +518,7 @@ export default function PlayPage() {
               </h3>
               <PrimerContent content={(currentFind.primers as { content: Record<string, unknown> }).content} />
             </div>
-            <button onClick={handlePrimeViewed} className="w-full btn-primary px-4 py-2 text-sm font-medium">
+            <button onClick={handlePrimeViewed} className="w-full bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-2 text-sm font-medium">
               I&apos;m Ready!
             </button>
           </div>
@@ -567,7 +567,7 @@ export default function PlayPage() {
                 }
               }}
               disabled={Object.keys(readingCheckAnswers).length < (currentFind.reading_check.questions?.length || 0)}
-              className="w-full btn-primary px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className="w-full bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               Check Answers
             </button>
@@ -603,7 +603,7 @@ export default function PlayPage() {
                   Need a hint? (-2 pts)
                 </button>
               ) : null}
-              <button onClick={handleClueRead} className="flex-1 btn-primary px-4 py-2 text-sm font-medium">
+              <button onClick={handleClueRead} className="flex-1 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-4 py-2 text-sm font-medium">
                 Start Navigating
               </button>
             </div>
@@ -819,7 +819,7 @@ export default function PlayPage() {
             <button
               onClick={handleRequestHint}
               disabled={hintLevel >= 4}
-              className="text-sm text-themed-primary hover:underline disabled:text-gray-500"
+              className="text-sm text-brand hover:underline disabled:text-gray-500"
             >
               {hintLevel === 0 ? "Need a hint?" : hintLevel < 4 ? `Get more help (Level ${hintLevel + 1})` : "No more hints available"}
             </button>
@@ -834,7 +834,7 @@ export default function PlayPage() {
               Take a photo of yourself at this location to remember your adventure!
             </p>
 
-            <label className="inline-block btn-primary px-6 py-3 text-sm font-medium cursor-pointer mb-4">
+            <label className="inline-block bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-3 text-sm font-medium cursor-pointer mb-4">
               Take Photo
               <input
                 type="file"
@@ -875,7 +875,7 @@ export default function PlayPage() {
 
             {score !== null && !huntMeta.hide_scores && (
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-themed-primary">{score}</div>
+                <div className="text-4xl font-bold text-brand">{score}</div>
                 <p className="text-sm text-gray-500">points earned</p>
               </div>
             )}
@@ -1011,14 +1011,14 @@ export default function PlayPage() {
           isLastFind ? (
             <button
               onClick={handleFinishHunt}
-              className="btn-primary px-6 py-2 text-sm font-medium"
+              className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-2 text-sm font-medium"
             >
               Finish Hunt
             </button>
           ) : (
             <button
               onClick={handleNextFind}
-              className="btn-primary px-6 py-2 text-sm font-medium"
+              className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-6 py-2 text-sm font-medium"
             >
               Next Stop
             </button>

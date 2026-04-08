@@ -143,7 +143,7 @@ export default function HuntDetailPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-4">
-      <Link href="/dashboard/hunts" className="text-sm text-themed-primary hover:underline mb-4 inline-block">
+      <Link href="/dashboard/hunts" className="text-sm text-brand hover:underline mb-4 inline-block">
         &larr; My Hunts
       </Link>
 
@@ -307,7 +307,7 @@ export default function HuntDetailPage() {
             {isDraft && (
               <button
                 onClick={() => setShowEditor(true)}
-                className="btn-primary px-5 py-2 text-sm font-medium"
+                className="bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors px-5 py-2 text-sm font-medium"
               >
                 Add First Stop
               </button>

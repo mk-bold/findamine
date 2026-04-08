@@ -74,7 +74,7 @@ export default function TrafficPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <Link href="/admin/security" className="text-sm text-themed-primary hover:underline">&larr; Security</Link>
+          <Link href="/admin/security" className="text-sm text-brand hover:underline">&larr; Security</Link>
           <h1 className="text-lg font-semibold text-gray-900 mt-1">Traffic &amp; Activity Analysis</h1>
         </div>
       </div>
