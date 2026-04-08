@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FEATURE_DEFINITIONS } from "@/lib/ml/threat-features";
-import { FEATURE_WEIGHTS, getModelConfig } from "@/lib/ml/threat-scorer";
+import { FEATURE_DEFINITIONS, FEATURE_WEIGHTS, getModelConfig } from "@/lib/ml/threat-config";
 
 const config = getModelConfig();
 
