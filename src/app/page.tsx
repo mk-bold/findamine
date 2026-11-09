@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { MapPin, Users, Trophy, Compass, BookOpen, Shield, ChevronRight, Footprints } from "lucide-react";
 import { selectHeroBanner, getHeroBannerContext } from "@/lib/services/hero-banner";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "https://findamine.app/" },
+};
 
 export default async function Home() {
   const headersList = await headers();

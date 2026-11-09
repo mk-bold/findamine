@@ -4,7 +4,7 @@ import { errorResponse } from "./api-auth";
 
 type RouteHandler = (
   request: NextRequest,
-  context?: { params: Promise<Record<string, string>> }
+  context: { params: Promise<Record<string, string>> }
 ) => Promise<Response>;
 
 /**

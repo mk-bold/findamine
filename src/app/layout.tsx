@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://findamine.app"),
   title: "findamine - GPS Treasure Hunting Adventures",
   description:
     "Location-based educational scavenger hunts for classrooms and families.",
