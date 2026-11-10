@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { MapPin, Clock, Users, Search, Compass } from "lucide-react";
@@ -18,6 +19,10 @@ const AUDIENCE_ICONS: Record<string, string> = {
   adults: "🎯",
   family: "🏡",
   all: "🌍",
+};
+
+export const metadata: Metadata = {
+  alternates: { canonical: "https://findamine.app/browse" },
 };
 
 export default async function BrowseHuntsPage({
